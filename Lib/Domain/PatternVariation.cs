@@ -8,8 +8,10 @@ namespace Wfc {
         Rot90 = 1,
         Rot180 = 2,
         Rot270 = 3,
-        FlipX = 4,
-        FlipY = 5,
+        FlipX = 4, // |
+        FlipY = 5, // -
+        FlipSlash = 6, // /
+        FlipBackslash = 7, // \
         // TODO: consider FlipDiagonally (y, x) etc.
     }
 
@@ -21,6 +23,8 @@ namespace Wfc {
             PatternVariation.Rot270,
             PatternVariation.FlipX,
             PatternVariation.FlipY,
+            PatternVariation.FlipSlash,
+            PatternVariation.FlipBackslash,
         };
     }
 
@@ -32,6 +36,11 @@ namespace Wfc {
         /// <remark>Can be used not only for <c>PatternVariant</c> but also for <c>OverlapDirection</c>
         public static Vec2 applyInt(int i, int n, Vec2 v) {
             switch (i) {
+                // 0     90    180   270
+                // ##..  ...#  ....  ....
+                // .##.  ..##  ....  .#..
+                // ....  ..#.  .##.  ##..
+                // ...   ....  ..##  #...
                 case 0: // Original
                     return new Vec2(v.x, v.y);
                 case 1: // Rot90
@@ -40,10 +49,19 @@ namespace Wfc {
                     return new Vec2(n - v.x, n - v.y);
                 case 3: // Rot270
                     return new Vec2(v.y, n - v.x);
-                case 4: // FlipX
-                    return new Vec2(n - v.x, v.y);
-                case 5: // FlipY
+                    // -     |     /     \
+                    // ....  ..##  ....  #...
+                    // ....  .##.  ..#.  ##..
+                    // .##.  ....  ..##  .#..
+                    // ##..  ....  ...#  ....
+                case 4: // |
                     return new Vec2(v.x, n - v.y);
+                case 5: // -
+                    return new Vec2(n - v.x, v.y);
+                case 6: // /
+                    return new Vec2(v.y, v.x);
+                case 7: // \
+                    return new Vec2(n - v.y, n - v.x);
                 default:
                     // TODO: just assert
                     return new Vec2(-10000, -10000);
