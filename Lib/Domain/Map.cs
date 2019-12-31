@@ -13,18 +13,19 @@ namespace Wfc {
 
     /// <summary>The domain, grid, cells of tiles</sumary>
     public class Map {
-        public Array2D<Tile> tiles;
+        public RectArray<Tile> tiles;
         public int width;
         public int height;
 
-        /// <summary>Never forget to add <c>Tile</c>s before accessing <c>tiles</c></summary>
+        /// <summary>Creates a <c>Map</c> with capacity w * h</summary>
+        /// <remark>Never forget to add <c>Tile</c>s before accessing <c>tiles</c></remark>
         public Map(int w, int h) {
             this.width = w;
             this.height = h;
-            this.tiles = new Array2D<Tile>(w, h);
+            this.tiles = new RectArray<Tile>(w, h);
         }
 
-        public static Map withCapacity(int w, int h) {
+        public static Map withItems(int w, int h) {
             var map = new Map(w, h);
             for (int i = 0; i < w * h; i++) {
                 map.tiles.add(Tile.None);

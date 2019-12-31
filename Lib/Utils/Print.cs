@@ -40,7 +40,7 @@ namespace Wfc {
 
     public static class MapExt {
         public static Map fromString(string asciiMap, int width, int height) {
-            var self = new Map(width, height);
+            var self = Map.withItems(width, height);
 
             using(StringReader reader = new StringReader(asciiMap)) {
                 string buf;
