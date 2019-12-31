@@ -4,9 +4,9 @@ namespace Wfc.Overlap {
     /// <summary>States of output map</summary>
     /// <remark>Wave</remark>
     public class State {
-        /// <summary>Still legal / compatible to neighbors. Enabled by neighbors. isLegal :: (int, int, PatternId) -> bool.</summary>
+        /// <summary>isLegal :: (int, int, PatternId) -> bool.</summary>
         /// <remark>A pattern is legal if it has more than one enabler in every direction</remark>
-        public CuboidArray<bool> legalities;
+        CuboidArray<bool> legalities;
         /// <remark>enablerCounts :: (specialIndex(int, int), PatternId, OverlappingDirection) -> bool</remark>
         public EnablerCounter enablerCounts;
         public RectArray<EntropyCacheData> entropies;
@@ -54,6 +54,8 @@ namespace Wfc.Overlap {
             }
             return map;
         }
+
+        public bool isLegal(int x, int y, PatternId id) => this.legalities[x, y, id.asIndex];
 
         public void removePattern(int x, int y, PatternId id_) {
             this.legalities[x, y, id_.asIndex] = false;

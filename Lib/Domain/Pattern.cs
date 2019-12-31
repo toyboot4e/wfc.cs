@@ -11,8 +11,8 @@ namespace Wfc {
     /// </remark>
     // TODO: DIP for the arbitary of implementations
     public class Pattern {
-        public Vec2 offset;
-        public PatternVariation variant;
+        public readonly Vec2 offset;
+        public readonly PatternVariation variant;
         /// <summary>The number of times it appears in the source <c>Map</c></summary>
         /// <remark>Frequency</remark>
         public int weight;
@@ -33,7 +33,7 @@ namespace Wfc {
 
     /// <summary>Wraps an integer as a special type</summary>
     public struct PatternId {
-        public int asIndex;
+        public readonly int asIndex;
 
         public PatternId(int data) {
             this.asIndex = data;
@@ -44,7 +44,7 @@ namespace Wfc {
     public class PatternStorage {
         public Map source;
         public readonly int N;
-        List<Pattern> buffer;
+        readonly List<Pattern> buffer;
 
         public PatternStorage(Map source, int N) {
             this.source = source;

@@ -144,7 +144,7 @@ namespace Wfc.Overlap {
                 int nPatterns = self.patterns.len;
                 int sumWeight = 0;
                 for (int id = 0; id < nPatterns; id++) {
-                    if (self.state.legalities[x, y, id] == false) continue;
+                    if (self.state.isLegal(x, y, new PatternId(id)) == false) continue;
                     sumWeight += self.patterns[id].weight;
                     if (sumWeight > random) return new PatternId(id);
                 }
@@ -172,7 +172,7 @@ namespace Wfc.Overlap {
                 var nPatterns = self.patterns.len;
                 for (int i = 0; i < nPatterns; i++) {
                     // skip illegal patterns and the pattern locked into
-                    if (self.state.legalities[x, y, i] == false || i == id.asIndex) continue;
+                    if (self.state.isLegal(x, y, new PatternId(i)) == false || i == id.asIndex) continue;
                     // remove the pattern from the legality distribution
                     self.state.removePattern(x, y, new PatternId(i));
                     // stack the removal so that we can later propagate the local similarity constraint (following AdjacencyRule)
@@ -212,7 +212,7 @@ namespace Wfc.Overlap {
 
                         // TODO: FIXME
                         // if the possibility is already removed, just skip the neighbor
-                        if (this.state.legalities[neighborX, neighborY, neighborId.asIndex] == false) continue;
+                        if (this.state.isLegal(neighborX, neighborY, neighborId) == false) continue;
                         if (this.state.entropies[neighborX, neighborY].isDecided) continue;
 
                         int nEnablers = this.state.enablerCounts[neighborX, neighborY, neighborId, dirFromNeighbor];
