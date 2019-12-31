@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Wfc.Overlap;
 
 namespace Wfc {
     public static class TileExt {
@@ -80,14 +81,28 @@ namespace Wfc {
 
     public static class PatternStorageExt {
         public static void print(this PatternStorage self) {
-            foreach(var pattern in self.buffer) {
+            for (int i = 0; i < self.len; i++) {
+                var pattern = self[i];
                 pattern.print(self.source, self.N);
-                Console.WriteLine($"weight: {pattern.weight}");
+                Console.WriteLine($"{i} (weight = {pattern.weight})");
                 Console.WriteLine();
             }
 
-            var n = self.buffer.Count;
+            var n = self.len;
             Console.WriteLine($" { n } pattterns found ");
+        }
+    }
+
+    public static class AdjacencyRuleExt {
+        public static void print(this AdjacencyRule self, int nPatterns) {
+            for (int from = 0; from < self.nPatterns; from++) {
+                for (int to = from; to < self.nPatterns; to++) {
+                    for (int d = 0; d < 4; d++) {
+                        if (!self.isLegalSafe(new PatternId(from), new PatternId(to), (OverlappingDirection) d)) continue;
+                        Console.WriteLine($"legal: {from} to {to} in {(OverlappingDirection) d}");
+                    }
+                }
+            }
         }
     }
 }

@@ -3,18 +3,25 @@ namespace Wfc.Overlap {
     /// Index, cache of possible adjacent patterns, constraint propagator for the overalpping model
     /// </summary>
     /// <remark>
-    /// The entire local similarity constraint of achieved by just ensuring adjacent overlapping patterns
+    /// The local similarity constraint is achieved by just ensuring adjacent overlapping patterns are legal
     /// </remark>
     public struct AdjacencyRule {
-        /// <summary>
-        /// <prarag>cache :: (PatternId, PatternId, Direction) -> bool</parag>
-        /// <prarag>cache[specialIndex(from, to), direction] -> isLegal where to >= from</parag>
-        /// </summary>
+        /// <summary>(direction, index(fromPattern, toPattern) -> isLegal (isCompatible)</summary>
         RectArray<bool> cache;
-        int nPatterns;
+        public int nPatterns;
+
+        int index(int from, int to) {
+            //       to
+            //     0123
+            // f 0 0123
+            // r 1  456
+            // o 2   78
+            // m 3    9
+            return (this.nPatterns + this.nPatterns - (from - 1)) * from / 2 + (to - from);
+        }
 
         public AdjacencyRule(PatternStorage patterns, Map source) {
-            int nPatterns = patterns.buffer.Count;
+            int nPatterns = patterns.len;
             int nOverlappingPatterns = (nPatterns + 1) * (nPatterns) / 2;
 
             this.nPatterns = nPatterns;
@@ -35,42 +42,30 @@ namespace Wfc.Overlap {
 
         static bool testCompatibility(int from, int to, OverlappingDirection dir, PatternStorage patterns, Map source) {
             int N = patterns.N;
-            var fromPattern = patterns.buffer[from];
-            var toPattern = patterns.buffer[to];
+            var fromPattern = patterns[from];
+            var toPattern = patterns[to];
+            // TODO: use row/col vector
             for (int row = 0; row < N - 1; row++) {
                 for (int col = 0; col < N; col++) {
                     // consider `from` is down and `to` is up (direction = North)
                     // get local positions in each pattern
-                    var down = new Vec2(col, row);
-                    var up = new Vec2(col, row + 1);
-                    // rotate them to get actual positions to the left-up corners of the patterns
-                    down = dir.applyAsRotation(down, N);
-                    up = dir.applyAsRotation(up, N);
+                    var downLocal = new Vec2(col, row);
+                    var upLocal = new Vec2(col, row + 1);
+                    // rotate them to get actual local positions (relative one to the left-up corners of the patterns)
+                    downLocal = dir.applyAsRotation(downLocal, N);
+                    upLocal = dir.applyAsRotation(upLocal, N);
                     // convert them (local positions) to global positions (position in the source)
-                    down = fromPattern.localPosToSourcePos(down, N);
-                    up = toPattern.localPosToSourcePos(up, N);
+                    var downGlobal = fromPattern.localPosToSourcePos(downLocal, N);
+                    var upGlobal = toPattern.localPosToSourcePos(upLocal, N);
                     // test the equaility
-                    if (source[down.x, down.y] != source[up.x, up.y]) return false;
+                    if (source[downGlobal.x, downGlobal.y] != source[upGlobal.x, upGlobal.y]) return false;
                 }
             }
             return true;
         }
 
-        /// <summary>Converts two integers into a one dimensional index</summary>
-        int index(int from, int to) {
-            //       to
-            //     0123
-            // f 0 0123
-            // r 1  456
-            // o 2   78
-            // m 3    9
-            int top = this.nPatterns;
-            int bottom = nPatterns - from;
-            return (top + bottom) * from / 2 + (to - from);
-        }
-
         /// <remark>Is compaible</remark>
-        public bool isLegal(PatternId from_, PatternId to_, OverlappingDirection direction) {
+        public bool isLegalSafe(PatternId from_, PatternId to_, OverlappingDirection direction) {
             int i = from_.asIndex;
             int j = to_.asIndex;
             if (i > j) {
@@ -80,11 +75,11 @@ namespace Wfc.Overlap {
                 i = i - j; // (a + b) - a (=b)
             }
 
-            return this.cache[this.index(i, j), (int) direction];
+            return this.cache[(int) direction, this.index(i, j)];
         }
 
-        public bool isLegalRaw(PatternId from, PatternId to, OverlappingDirection d) {
-            return this.cache[this.index(from.asIndex, to.asIndex), (int) d];
+        public bool isLegalUnsafe(PatternId from, PatternId to, OverlappingDirection d) {
+            return this.cache[(int) d, this.index(from.asIndex, to.asIndex)];
         }
     }
 }

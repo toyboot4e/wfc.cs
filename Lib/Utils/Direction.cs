@@ -13,11 +13,11 @@ namespace Wfc.Overlap {
         }
 
         public static OverlappingDirection opposite(this OverlappingDirection self) {
-            return (OverlappingDirection) (3 - (int) self);
+            return (OverlappingDirection) (((int) self + 2) % 2);
         }
 
         public static int opposite(int d) {
-            return 3 - d;
+            return (d + 2) % 2;
         }
     }
 }

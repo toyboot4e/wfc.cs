@@ -44,13 +44,19 @@ namespace Wfc {
     public class PatternStorage {
         public Map source;
         public readonly int N;
-        public List<Pattern> buffer;
+        List<Pattern> buffer;
 
         public PatternStorage(Map source, int N) {
             this.source = source;
             this.buffer = new List<Pattern>();
             this.N = N;
         }
+
+        public int len => this.buffer.Count;
+
+        public Pattern this[int id] => this.buffer[id];
+
+        // TODO: add indexer and hide buffer
 
         /// <summary>Stores an extracted pattern considering duplicates</summary>
         public void add(int x, int y, PatternVariation v) {

@@ -49,7 +49,7 @@ namespace Wfc {
                     return new Vec2(n - v.x, n - v.y);
                 case 3: // Rot270
                     return new Vec2(v.y, n - v.x);
-                    // -     |     /     \
+                    // [-]   [|]   [/]   [\]
                     // ....  ..##  ....  #...
                     // ....  .##.  ..#.  ##..
                     // .##.  ....  ..##  .#..
