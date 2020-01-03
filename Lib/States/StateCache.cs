@@ -50,22 +50,21 @@ namespace Wfc.Overlap {
 
         EnablerCounter(int width, int height, int nPatterns) {
             this.width = width;
-            this.counts = new CuboidArray<int>(width, height, nPatterns);
-        }
-
-        int index(PatternId id, OverlappingDirection dir) {
-            return (int) dir + 4 * id.asIndex;
+            this.counts = new CuboidArray<int>(width, height, 4 * nPatterns);
         }
 
         public int this[int x, int y, PatternId id, OverlappingDirection dir] {
-            get => this.counts[x, y, this.index(id, dir)];
-            set => this.counts[x, y, this.index(id, dir)] = value;
+            get => this.counts[x, y, (int) dir + 4 * id.asIndex];
+            set => this.counts[x, y, (int) dir + 4 * id.asIndex] = value;
         }
 
         public void decrement(int x, int y, PatternId id, OverlappingDirection dir) {
             this[x, y, id, dir] -= 1;
         }
 
+        /// <summary>
+        /// The pattern is already forbidden if there is no enabler for it in any direction
+        /// </summary>
         public bool anyZeroEnablerFor(int x, int y, PatternId id) {
             for (int d = 0; d < 4; d++) {
                 if (this[x, y, id, (OverlappingDirection) d] == 0) return true;
@@ -73,7 +72,7 @@ namespace Wfc.Overlap {
             return false;
         }
 
-        public static EnablerCounter initial(int width, int height, PatternStorage patterns, AdjacencyRule rule) {
+        public static EnablerCounter initial(int width, int height, PatternStorage patterns, ref AdjacencyRule rule) {
             int nPatterns = patterns.len;
             var self = new EnablerCounter(width, height, nPatterns);
 
@@ -82,14 +81,14 @@ namespace Wfc.Overlap {
                 self.counts.add(0);
             }
 
+            // TODO: separate me and copy it to every cell
             // first, let's count enablers in (0, 0) with the adjacency rule:
-            for (int id = 0; id < nPatterns; id++) {
+            for (int idToCount = 0; idToCount < nPatterns; idToCount++) {
                 // sum up enablers for each adjacency rule with direction
-                for (int otherId = id; otherId < nPatterns; otherId++) {
+                for (int otherId = 0; otherId < nPatterns; otherId++) {
                     for (int d = 0; d < 4; d++) {
-                        int index = d + 4 * id;
-                        if (rule.isLegalSafe(new PatternId(id), new PatternId(otherId), dirs[d])) {
-                            self.counts[0, 0, index] += 1;
+                        if (rule.isLegalSafe(new PatternId(idToCount), new PatternId(otherId), dirs[d])) {
+                            self[0, 0, new PatternId(idToCount), (OverlappingDirection) d] += 1;
                         }
                     }
                 }
@@ -101,8 +100,9 @@ namespace Wfc.Overlap {
                 for (int x = 0; x < width; x++) {
                     for (int id = 0; id < nPatterns; id++) {
                         for (int d = 0; d < 4; d++) {
-                            int index = d + 4 * id;
-                            self.counts[x, y, index] = self.counts[0, 0, index];
+                            var id_ = new PatternId(id);
+                            var dir = (OverlappingDirection) d;
+                            self[x, y, id_, dir] = self[0, 0, id_, dir];
                         }
                     }
                 }

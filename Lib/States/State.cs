@@ -10,11 +10,14 @@ namespace Wfc.Overlap {
         /// <remark>enablerCounts :: (specialIndex(int, int), PatternId, OverlappingDirection) -> bool</remark>
         public EnablerCounter enablerCounts;
         public RectArray<EntropyCacheData> entropies;
+        /// <summary>Util</summary>
+        public Vec2 outputSize;
 
-        public State(int width, int height, PatternStorage patterns, AdjacencyRule rule) {
+        public State(int width, int height, PatternStorage patterns, ref AdjacencyRule rule) {
+            this.outputSize = new Vec2(width, height);
             int nPatterns = patterns.len;
             this.legalities = new CuboidArray<bool>(width, height, nPatterns);
-            this.enablerCounts = EnablerCounter.initial(width, height, patterns, rule);
+            this.enablerCounts = EnablerCounter.initial(width, height, patterns, ref rule);
             this.entropies = new RectArray<EntropyCacheData>(width, height);
 
             var cache = EntropyCacheData.fromPatterns(patterns);
@@ -26,6 +29,21 @@ namespace Wfc.Overlap {
             }
         }
 
+        public PatternId? patternIdAt(int x, int y, int nPatterns) {
+            var w = this.outputSize.x;
+            var h = this.outputSize.y;
+            if (!this.entropies[x, y].isDecided) {
+                return null;
+            }
+            var offsetOfIndex = nPatterns * (x + w * y);
+            var index = this.legalities.items.FindIndex(offsetOfIndex, nPatterns, (x) => x);
+            if (index == -1) {
+                System.Console.WriteLine($"patternAt(): ERROR: collapsed but not found at ({x}, {y})");
+                return null;
+            }
+            return new PatternId(index - offsetOfIndex);
+        }
+
         public Map getOutput(int outputW, int outputH, Map source, int N, PatternStorage patterns) {
             int nPatterns = patterns.len;
             var map = new Map(outputW, outputH);
@@ -33,24 +51,15 @@ namespace Wfc.Overlap {
             for (int i = 0; i < outputW * outputH; i++) {
                 int x = i % outputW;
                 int y = i / outputW;
-                var tile = Tile.None;
-                if (this.entropies[x, y].isDecided) {
-                    var offsetIndex = nPatterns * (x + y * outputW);
-                    var index = this.legalities.items.FindIndex(offsetIndex, nPatterns, (x) => x);
-                    if (index == -1) {
-                        System.Console.WriteLine($"ERROR: collapsed but not found at ({x}, {y})");
-                        map.tiles.add(Tile.None);
-                        continue;
-                    }
-                    index -= offsetIndex;
-                    // System.Console.Write($"{index} ");
-                    var pattern = patterns[index];
-                    var sourcePos = pattern.localPosToSourcePos(new Vec2(0, 0), N);
-                    tile = source[sourcePos.x, sourcePos.y];
-                } else {
-                    // System.Console.WriteLine($"Not collapsed: {x}, {y}");
+                var patternId = this.patternIdAt(x, y, nPatterns);
+                if (patternId == null) {
+                    map.tiles.add(Tile.None);
+                    continue;
                 }
-                map.tiles.add(tile); //patterns.buffer[i].tileAt(x, y, N, source));
+                var pattern = patterns[((PatternId) patternId).asIndex];
+                var sourcePos = pattern.localPosToSourcePos(new Vec2(0, 0), N);
+                var tile = source[sourcePos.x, sourcePos.y];
+                map.tiles.add(tile);
             }
             return map;
         }
