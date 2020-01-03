@@ -13,7 +13,19 @@ namespace Wfc.Overlap {
         }
 
         public static OverlappingDirection opposite(this OverlappingDirection self) {
-            return (OverlappingDirection) (((int) self + 2) % 2);
+            switch (self) {
+                case OverlappingDirection.N:
+                    return OverlappingDirection.S;
+                case OverlappingDirection.E:
+                    return OverlappingDirection.W;
+                case OverlappingDirection.S:
+                    return OverlappingDirection.N;
+                case OverlappingDirection.W:
+                    return OverlappingDirection.E;
+            }
+            // return (OverlappingDirection) (((int) self + 2) % 2);
+            // TODO: faster calculation
+            throw new System.Exception("OUT");
         }
 
         public static int opposite(int d) {

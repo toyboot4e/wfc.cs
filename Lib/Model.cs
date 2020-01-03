@@ -119,7 +119,10 @@ namespace Wfc.Overlap {
         }
 
         public Context.AdvanceStatus advance(Context cx) {
-            if (this.nRemainings <= 0) return Context.AdvanceStatus.Success;
+            if (this.nRemainings <= 0) {
+                this.propagator.propagate(cx, this);
+                return Context.AdvanceStatus.Success;
+            }
             var(pos, isOnContradiction) = Observer.selectNextCell(this.heap, cx.state);
             if (isOnContradiction) return Context.AdvanceStatus.Fail;
             var id = selectPatternForCell(pos.x, pos.y, cx.state, cx.model.patterns, cx.random);
@@ -218,47 +221,50 @@ namespace Wfc.Overlap {
         };
 
         public Context.AdvanceStatus propagate(Context cx, Observer observer) {
-            // System.Console.WriteLine($"=== propagate ===");
-            int nPatterns = cx.model.patterns.len;
             while (this.removals.Count > 0) {
                 var removal = this.removals.Pop();
-                // System.Console.WriteLine($"removal found: {removal.x}, {removal.y}, {removal.id.asIndex}");
-                // for each neighbor (= for each cells in the direction)
-                for (int dirIndex = 0; dirIndex < 4; dirIndex++) {
-                    var dirFromNeighbor = dirs[dirIndex].opposite();
-                    int neighborX = removal.x + dirVecs[dirIndex].Item1;
-                    int neighborY = removal.y + dirVecs[dirIndex].Item2;
+                var status = this.handle(removal, cx, observer);
+                if (status != Context.AdvanceStatus.Continue) return status;
+            }
+            return Context.AdvanceStatus.Continue;
+        }
 
-                    // TODO: boundary check / periodicity
-                    if (cx.model.input.isOnBoundary(neighborX, neighborY)) continue;
+        Context.AdvanceStatus handle(TileRemoval removal, Context cx, Observer observer) {
+            int nPatterns = cx.model.patterns.len;
+            for (int dirIndex = 0; dirIndex < 4; dirIndex++) {
+                var dirFromNeighbor = dirs[dirIndex].opposite();
+                int neighborX = removal.x + dirVecs[dirIndex].Item1;
+                int neighborY = removal.y + dirVecs[dirIndex].Item2;
 
-                    for (int i = 0; i < nPatterns; i++) {
-                        var neighborId = new PatternId(i);
-                        // just scan through legal patterns in the neighbor
-                        if (!cx.model.rule.isLegalSafe(neighborId, removal.id, dirFromNeighbor)) continue;
+                // TODO: boundary check / periodicity
+                if (cx.model.input.isOnBoundary(neighborX, neighborY)) continue;
 
-                        // TODO: FIXME
-                        // if the possibility is already removed, just skip the neighbor
-                        if (cx.state.isLegal(neighborX, neighborY, neighborId) == false) continue;
-                        if (cx.state.entropies[neighborX, neighborY].isDecided) continue;
+                for (int i = 0; i < nPatterns; i++) {
+                    var neighborId = new PatternId(i);
+                    // just scan through legal patterns in the neighbor
+                    if (!cx.model.rule.isLegalSafe(neighborId, removal.id, dirFromNeighbor)) continue;
 
-                        int nEnablers = cx.state.enablerCounts[neighborX, neighborY, neighborId, dirFromNeighbor];
-                        // TODO: what's this?
-                        if (nEnablers == 1 && !cx.state.enablerCounts.anyZeroEnablerFor(neighborX, neighborY, neighborId)) {
-                            // System.Console.WriteLine($"neighbor: {neighborX}, {neighborY}, {neighborId.asIndex}");
-                            // finally the pattern is not compatible
-                            cx.state.removePatternUpdatingEntropy(neighborX, neighborY, neighborId, cx.model.patterns);
-                            if (cx.state.entropies[neighborX, neighborY].totalWeight == 0) {
-                                return Context.AdvanceStatus.Fail; // contradiction
-                            }
-                            // update heap so that this cell is easier to choose next time
-                            observer.onUpdateEntropy(neighborX, neighborY, cx.state.entropies[neighborX, neighborY].entropyWithNoise());
-                            // and let it be propagated
-                            this.removals.Push(new TileRemoval(neighborX, neighborY, neighborId));
+                    // TODO: FIXME
+                    // if the possibility is already removed, just skip the pattern for the neighbor cell
+                    if (cx.state.isLegal(neighborX, neighborY, neighborId) == false) continue;
+
+                    int nEnablers = cx.state.enablerCounts[neighborX, neighborY, neighborId, dirFromNeighbor];
+                    // if (nEnablers == 0) System.Console.Write("ERROR zero enabler ");
+                    // TODO: what's this?
+                    if (nEnablers == 1 && !cx.state.enablerCounts.anyZeroEnablerFor(neighborX, neighborY, neighborId)) {
+                        // System.Console.WriteLine($"neighbor: {neighborX}, {neighborY}, {neighborId.asIndex}");
+                        // finally the pattern is not compatible
+                        cx.state.removePatternUpdatingEntropy(neighborX, neighborY, neighborId, cx.model.patterns);
+                        if (cx.state.entropies[neighborX, neighborY].totalWeight == 0) {
+                            return Context.AdvanceStatus.Fail; // contradiction
                         }
-
-                        cx.state.enablerCounts.decrement(neighborX, neighborY, neighborId, dirFromNeighbor);
+                        // update heap so that this cell is easier to choose next time
+                        observer.onUpdateEntropy(neighborX, neighborY, cx.state.entropies[neighborX, neighborY].entropyWithNoise());
+                        // and let it be propagated
+                        this.removals.Push(new TileRemoval(neighborX, neighborY, neighborId));
                     }
+
+                    cx.state.enablerCounts.decrement(neighborX, neighborY, neighborId, dirFromNeighbor);
                 }
             }
             return Context.AdvanceStatus.Continue;

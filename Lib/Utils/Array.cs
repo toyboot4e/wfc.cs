@@ -67,6 +67,7 @@ namespace Wfc {
         }
     }
 
+    // TODO: symmetric cuboid array
     /// <summary>Properties mapped from coordinates in a triangular prism</summary>
     /// <remark>
     /// <c>add</c> items before using it. Continuous with z index (then x index).
@@ -90,6 +91,7 @@ namespace Wfc {
                 y = x + y; //  a + b
                 x = y - x; // (a + b) - a (=b)
                 y = y - x; // (a + b) - b (=a)
+                // TODO: maybe invert z
             }
 
             //        x

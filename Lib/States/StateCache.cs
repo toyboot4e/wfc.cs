@@ -42,9 +42,6 @@ namespace Wfc.Overlap {
     }
 
     public class EnablerCounter {
-        // TODO: stackalloc or better int -> enum conversion
-        static OverlappingDirection[] dirs = new [] { OverlappingDirection.N, OverlappingDirection.E, OverlappingDirection.S, OverlappingDirection.W };
-
         int width;
         CuboidArray<int> counts;
 
@@ -84,11 +81,12 @@ namespace Wfc.Overlap {
             // TODO: separate me and copy it to every cell
             // first, let's count enablers in (0, 0) with the adjacency rule:
             for (int idToCount = 0; idToCount < nPatterns; idToCount++) {
+                var id = new PatternId(idToCount);
                 // sum up enablers for each adjacency rule with direction
                 for (int otherId = 0; otherId < nPatterns; otherId++) {
                     for (int d = 0; d < 4; d++) {
-                        if (rule.isLegalSafe(new PatternId(idToCount), new PatternId(otherId), dirs[d])) {
-                            self[0, 0, new PatternId(idToCount), (OverlappingDirection) d] += 1;
+                        if (rule.isLegalSafe(id, new PatternId(otherId), (OverlappingDirection) d)) {
+                            self[0, 0, id, (OverlappingDirection) d] += 1;
                         }
                     }
                 }

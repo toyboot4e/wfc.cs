@@ -7,6 +7,7 @@ namespace Wfc.Overlap {
     /// </remark>
     public struct AdjacencyRule {
         /// <summary>(direction, index(fromPattern, toPattern) -> isLegal (isCompatible)</summary>
+        /// <remark>Be careful of the indexing</remark>
         RectArray<bool> cache;
         public int nPatterns;
 
@@ -16,7 +17,7 @@ namespace Wfc.Overlap {
             // f 0 0123
             // r 1  456
             // o 2   78
-            // m 3    9
+            // m 3    9 (symmetric parts are not cached)
             return (this.nPatterns + this.nPatterns - (from - 1)) * from / 2 + (to - from);
         }
 
@@ -40,6 +41,7 @@ namespace Wfc.Overlap {
             }
         }
 
+        /// <summary>Used to create cache</summary>
         static bool testCompatibility(int from, int to, OverlappingDirection dir, PatternStorage patterns, Map source) {
             int N = patterns.N;
             var fromPattern = patterns[from];
@@ -69,10 +71,12 @@ namespace Wfc.Overlap {
             int i = from_.asIndex;
             int j = to_.asIndex;
             if (i > j) {
-                // swap them
+                // swap the patterns
                 i = i + j; // a + b
                 j = i - j; // (a + b) - b (=a)
                 i = i - j; // (a + b) - a (=b)
+                // invert the direction
+                direction = direction.opposite();
             }
 
             return this.cache[(int) direction, this.index(i, j)];

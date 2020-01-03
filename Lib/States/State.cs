@@ -10,6 +10,7 @@ namespace Wfc.Overlap {
         /// <remark>enablerCounts :: (specialIndex(int, int), PatternId, OverlappingDirection) -> bool</remark>
         public EnablerCounter enablerCounts;
         public RectArray<EntropyCacheData> entropies;
+        // T
         /// <summary>Util</summary>
         public Vec2 outputSize;
 
