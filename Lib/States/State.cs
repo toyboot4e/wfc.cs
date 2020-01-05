@@ -37,7 +37,7 @@ namespace Wfc.Overlap {
                 return null;
             }
             var offsetOfIndex = nPatterns * (x + w * y);
-            var index = this.legalities.items.FindIndex(offsetOfIndex, nPatterns, (x) => x);
+            var index = this.legalities.items.FindIndex(offsetOfIndex, nPatterns, x => x);
             if (index == -1) {
                 System.Console.WriteLine($"patternAt(): ERROR: collapsed but not found at ({x}, {y})");
                 return null;

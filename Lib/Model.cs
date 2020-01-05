@@ -17,7 +17,7 @@ namespace Wfc.Overlap {
         /// <summary>
         /// Tries to solve the constraint satisfication problem with the observe-propagate loop
         /// </summary>
-        public void run() {
+        public bool run() {
             var observer = new Observer(this.model.input.outputSize, this.state);
             while (true) {
                 switch (observer.advance(this)) {
@@ -25,10 +25,10 @@ namespace Wfc.Overlap {
                         continue;
                     case AdvanceStatus.Success:
                         System.Console.WriteLine("SUCCESS");
-                        return;
+                        return true;
                     case AdvanceStatus.Fail:
                         System.Console.WriteLine("FAIL");
-                        return;
+                        return false;
                 }
             }
         }
@@ -223,13 +223,13 @@ namespace Wfc.Overlap {
         public Context.AdvanceStatus propagate(Context cx, Observer observer) {
             while (this.removals.Count > 0) {
                 var removal = this.removals.Pop();
-                var status = this.handle(removal, cx, observer);
+                var status = this.handleRemoval(removal, cx, observer);
                 if (status != Context.AdvanceStatus.Continue) return status;
             }
             return Context.AdvanceStatus.Continue;
         }
 
-        Context.AdvanceStatus handle(TileRemoval removal, Context cx, Observer observer) {
+        Context.AdvanceStatus handleRemoval(TileRemoval removal, Context cx, Observer observer) {
             int nPatterns = cx.model.patterns.len;
             for (int dirIndex = 0; dirIndex < 4; dirIndex++) {
                 var dirFromNeighbor = dirs[dirIndex].opposite();
