@@ -1,6 +1,8 @@
 namespace Wfc {
     /// <summary>
-    /// Fills a cell in a map. Has size of 1x1. Chunk of tiles is a <c>Map</c> or a <c>Pattern</c></summary>
+    /// Fills a cell in a map. Has size of 1x1. Corresponds to a pixel in texture mode.
+    /// Chunk of tiles is a <c>Map</c> or a part of it (a <c>Pattern</c>)
+    /// </summary>
     public enum Tile {
         None = 0,
         Wall = 1,
@@ -9,25 +11,35 @@ namespace Wfc {
         UpStair = 4,
     }
 
-    /// <summary>Two-dimensional array of <c>Tile</c>s. Used for both input and output of WFC.</summary>
-    /// <remark>The domain</summary>
+    /// <summary>The domain, grid, cells of tiles</sumary>
     public class Map {
-        public Array2D<Tile> tiles;
+        public RectArray<Tile> tiles;
         public int width;
         public int height;
 
+        /// <summary>Creates a <c>Map</c> with capacity w * h</summary>
+        /// <remark>Never forget to add <c>Tile</c>s before accessing <c>tiles</c></remark>
         public Map(int w, int h) {
             this.width = w;
             this.height = h;
-            this.tiles = new Array2D<Tile>(w, h);
+            this.tiles = new RectArray<Tile>(w, h);
+        }
+
+        public static Map withItems(int w, int h) {
+            var map = new Map(w, h);
             for (int i = 0; i < w * h; i++) {
-                this.tiles.add(Tile.None);
+                map.tiles.add(Tile.None);
             }
+            return map;
         }
 
         public Tile this[int x, int y] {
-            get => this.tiles.get(x, y);
-            set => this.tiles.set(x, y, value);
+            get => this.tiles[x, y];
+            set => this.tiles[x, y] = value;
+        }
+
+        public void add(Tile tile) {
+            this.tiles.add(tile);
         }
     }
 }

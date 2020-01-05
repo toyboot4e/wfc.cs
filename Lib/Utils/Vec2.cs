@@ -15,6 +15,8 @@ namespace Wfc {
             new Vec2(this.x, this.y + 1),
         };
 
+        public int area => this.x * this.y;
+
         // operators
         public static bool operator ==(Vec2 v1, Vec2 v2) => v1.Equals(v2);
         public static bool operator !=(Vec2 v1, Vec2 v2) => !v1.Equals(v2);

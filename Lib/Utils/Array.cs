@@ -1,49 +1,126 @@
 using System.Collections.Generic;
 
 namespace Wfc {
-    public struct Array2D<T> {
+    /// <summary>Properties mapped from coordinates in a square</summary>
+    /// <remark><c>add</c> items before using it. Continuous with x index</summary>
+    public struct RectArray<T> {
         public int width;
-        public List<T> values;
+        public List<T> items;
 
-        public Array2D(int w, int h) {
+        /// <summary>Creates an <c>Array2d</c> with capacity w * h</summary>
+        /// <remark>Never forget to <c>add</c> items before accessing <c>values</c></summary>
+        public RectArray(int w, int h) {
             this.width = w;
-            this.values = new List<T>(w * h);
+            this.items = new List<T>(w * h);
         }
 
-        int index(int x, int y) => x + y * this.width;
+        public int capacity => this.items.Capacity;
+
+        public int index(int x, int y) => x + this.width * y;
 
         public T get(int x, int y) {
-            return this.values[this.index(x, y)];
+            return this.items[this.index(x, y)];
         }
-
         public void set(int x, int y, T value) {
-            this.values[this.index(x, y)] = value;
+            this.items[this.index(x, y)] = value;
         }
 
-        public void add(T value) => this.values.Add(value);
+        public void add(T value) => this.items.Add(value);
+
+        public T this[int x, int y] {
+            get => this.get(x, y);
+            set => this.set(x, y, value);
+        }
     }
 
-    public struct Array3D<T> {
+    /// <summary>Properties mapped from coordinates in a cuboid</summary>
+    /// <remark><c>add</c> items before using it. Continuous with z index (then x index)</summary>
+    public struct CuboidArray<T> {
         public int nx;
         public int nz;
-        public List<T> values;
+        public List<T> items;
 
-        public Array3D(int nx, int ny, int nz) {
+        /// <summary>Creates an <c>Array2d</c> with capacity nx * ny * nz</summary>
+        /// <remark>Never forget to <c>add</c> items before accessing <c>values</c></summary>
+        public CuboidArray(int nx, int ny, int nz) {
             this.nx = nx;
             this.nz = nz;
-            this.values = new List<T>(nx * ny * nz);
+            this.items = new List<T>(nx * ny * nz);
         }
 
-        int index(int x, int y, int z) => (x + y * this.nx) * this.nz + z;
+        public int capacity => this.items.Capacity;
+
+        public int index(int x, int y, int z) => z + this.nz * (x + this.nx * y);
 
         public T get(int x, int y, int z) {
-            return this.values[this.index(x, y, z)];
+            return this.items[this.index(x, y, z)];
         }
-
         public void set(int x, int y, int z, T value) {
-            this.values[this.index(x, y, z)] = value;
+            this.items[this.index(x, y, z)] = value;
         }
 
-        public void add(T value) => this.values.Add(value);
+        public void add(T value) => this.items.Add(value);
+
+        public T this[int x, int y, int z] {
+            get => this.get(x, y, z);
+            set => this.set(x, y, z, value);
+        }
+    }
+
+    // TODO: symmetric cuboid array
+    /// <summary>Properties mapped from coordinates in a triangular prism</summary>
+    /// <remark>
+    /// <c>add</c> items before using it. Continuous with z index (then x index).
+    /// </summary>
+    public struct TriangularPrismArray<T> {
+        public int nx;
+        public int nz;
+        public List<T> items;
+
+        public TriangularPrismArray(int nx, int ny, int nz) {
+            this.nx = nx;
+            this.nz = nz;
+            this.items = new List<T>((nx + 1) * ny / 2 * nz);
+        }
+
+        public int capacity => this.items.Capacity;
+
+        public int xyIndex(int x, int y) {
+            // force (x >= y)
+            if (x < y) { // swap
+                y = x + y; //  a + b
+                x = y - x; // (a + b) - a (=b)
+                y = y - x; // (a + b) - b (=a)
+                // TODO: maybe invert z
+            }
+
+            //        x
+            //     0123
+            //   0 0123
+            //   1  456
+            //   2   78
+            // y 3    9
+            int top = this.nx;
+            int bottom = nx - y;
+            return (top + bottom) * y / 2 + (x - y);
+        }
+
+        public int index(int x, int y, int z) {
+            return this.xyIndex(x, y) * this.nz + z;
+        }
+
+        public T get(int x, int y, int z) {
+            return this.items[this.index(x, y, z)];
+        }
+        public void set(int x, int y, int z, T value) {
+            this.items[this.index(x, y, z)] = value;
+        }
+
+        public void add(T value) => this.items.Add(value);
+
+        public T this[int x, int y, int z] {
+            get => this.get(x, y, z);
+            set => this.set(x, y, z, value);
+        }
     }
 }
