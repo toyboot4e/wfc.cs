@@ -2,8 +2,8 @@ using System;
 
 namespace Wfc.Overlap {
     /// <summary>Used to pick up a cell with least entropy</summary>
-    /// <remark>Add some noise to make choices random</remark>
-    public class Heap {
+    /// <remark>Add some noise to make random choices</remark>
+    public struct Heap {
         MinHeap<PosWithEntropy> buffer;
 
         public Heap(int capacity) {
@@ -34,13 +34,15 @@ namespace Wfc.Overlap {
                 this.entropy = entropy;
             }
 
-            // FIXME: never use it without noise
+            ///<renarj>FIXME: never use it without noise</remark>
             public int CompareTo(PosWithEntropy other) {
                 return this.entropy - other.entropy > 0 ? 1 : -1;
             }
         }
     }
 
+    // TODO: consider making it a struct (indexer doesn't require copy, does it?)
+    /// <summary>(int, int, PatternId, OverlappingDirection) -> int</summary>
     public class EnablerCounter {
         int width;
         CuboidArray<int> counts;
@@ -55,8 +57,14 @@ namespace Wfc.Overlap {
             set => this.counts[x, y, (int) dir + 4 * id.asIndex] = value;
         }
 
-        public void decrement(int x, int y, PatternId id, OverlappingDirection dir) {
-            this[x, y, id, dir] -= 1;
+        // public void decrement(int x, int y, PatternId id, OverlappingDirection dir) {
+        //     this[x, y, id, dir] -= 1;
+        // }
+
+        public bool reduce(int x, int y, PatternId id, OverlappingDirection direction) {
+            var count = this[x, y, id, direction];
+            this[x, y, id, direction] -= 1;
+            return count == 0;
         }
 
         /// <summary>
@@ -151,7 +159,7 @@ namespace Wfc.Overlap {
             return Math.Log(this.totalWeight, 2) - this.cachedExpr / this.totalWeight + random.NextDouble() * 1E-6;
         }
 
-        /// <summary>Updates self (<c>EntropyCacheData</c>)</summary>
+        /// <summary>Updates <c>totalWeight</c> and <c>cachedExpr</c></summary>
         public void onReduce(int weight) {
             this.totalWeight -= weight;
             this.cachedExpr -= (double) weight * (double) Math.Log(this.totalWeight, 2);
