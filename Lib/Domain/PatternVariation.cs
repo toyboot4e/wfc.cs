@@ -1,18 +1,17 @@
 namespace Wfc {
     /// <summary>
-    /// Flipping or rotation. Can be applied to each point in a <c>Pattern<c/> to map it
-    /// to another in a source map through an extension method with context.
+    /// Flipping, rotation or none. Can be applied to each point in a <c>Pattern<c/> to map it
+    /// to one in a source map.
     /// </summary>
     public enum PatternVariation {
         Original = 0,
         Rot90 = 1,
         Rot180 = 2,
         Rot270 = 3,
-        FlipX = 4, // |
-        FlipY = 5, // -
+        FlipX = 4, // -
+        FlipY = 5, // |
         FlipSlash = 6, // /
         FlipBackslash = 7, // \
-        // TODO: consider FlipDiagonally (y, x) etc.
     }
 
     public static class PatternUtil {
@@ -33,7 +32,7 @@ namespace Wfc {
             return applyInt((int) self, N - 1, v);
         }
 
-        /// <remark>Can be used not only for <c>PatternVariant</c> but also for <c>OverlapDirection</c>
+        /// <remark>Can be used not only for <c>PatternVariant</c> but also for <c>OverlapDirection</c></remark>
         public static Vec2 applyInt(int i, int n, Vec2 v) {
             switch (i) {
                 // 0     90    180   270
@@ -54,9 +53,9 @@ namespace Wfc {
                     // ....  .##.  ..#.  ##..
                     // .##.  ....  ..##  .#..
                     // ##..  ....  ...#  ....
-                case 4: // |
+                case 4: // -
                     return new Vec2(v.x, n - v.y);
-                case 5: // -
+                case 5: // |
                     return new Vec2(n - v.x, v.y);
                 case 6: // /
                     return new Vec2(v.y, v.x);
@@ -68,7 +67,7 @@ namespace Wfc {
             }
         }
 
-        /// <summary>Converts a point in a <c>Pattern</c> to a point in the <c>source</c></summary>
+        /// <summary>Converts a point in a <c>Pattern</c> to one in the <c>source</c></summary>
         public static Vec2 localPosToSourcePos(this Pattern self, Vec2 localPosition, int N) {
             return self.offset + self.variant.apply(N, localPosition);
         }

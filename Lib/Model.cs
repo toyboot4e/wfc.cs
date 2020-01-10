@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Wfc.Overlap {
-    /// <summary>The top of the wave function collapse algorithm</summary>
+    /// <summary>The top interface of the wave function collapse algorithm</summary>
     public class WfcContext {
         public readonly Model model;
         public readonly State state;
@@ -14,7 +14,7 @@ namespace Wfc.Overlap {
             this.state = new State(outputSize.x, outputSize.y, this.model.patterns, ref this.model.rule);
         }
 
-        /// <summary>Returns if succeeded</summary>
+        /// <summary>Returns if it succeeded</summary>
         public bool run() {
             var observer = new Observer(this.model.input.outputSize, this.state);
             while (true) {
@@ -22,6 +22,7 @@ namespace Wfc.Overlap {
                     case AdvanceStatus.Continue:
                         continue;
                     case AdvanceStatus.Success:
+                        // TODO: debug print
                         System.Console.WriteLine("SUCCESS");
                         return true;
                     case AdvanceStatus.Fail:
@@ -32,9 +33,9 @@ namespace Wfc.Overlap {
         }
 
         public enum AdvanceStatus {
-            /// <summary>Every cell is filled in respect of the <c>AdjacencyRule</c></summary>
+            /// <summary>Every cell is filled in respect to the local similarity constraint (<c>AdjacencyRule</c>)</summary>
             Success,
-            /// <summary>A contradiction is reached, where any cell has no possible pattern</summary>
+            /// <summary>A contradiction is reached, where some cell has no possible pattern</summary>
             Fail,
             /// <summary>Just in proress</summary>
             Continue,
@@ -42,7 +43,7 @@ namespace Wfc.Overlap {
     }
 
     /// <summary>
-    /// Creates input for the wave function collapse algorithm (overlappin model)
+    /// Creates input for the wave function collapse algorithm (overlapping model)
     /// </summary>
     public class Model {
         public Input input;
@@ -50,16 +51,10 @@ namespace Wfc.Overlap {
         public AdjacencyRule rule;
 
         /// <summary>Original input from a user</summary>
-        public struct Input {
+        public class Input {
             public Map source;
             public int N;
             public Vec2 outputSize;
-
-            // TODO: handling periodic output
-            public bool isOnBoundary(int x, int y) {
-                var size = this.outputSize;
-                return x < 0 || x >= size.x || y < 0 || y >= size.y;
-            }
         }
 
         public Model(Map source, int N, Vec2 outputSize) {
@@ -73,14 +68,22 @@ namespace Wfc.Overlap {
             this.rule = new AdjacencyRule(this.patterns, input.source);
         }
 
+        // TODO: handling periodic output
+        /// <summary>Filters positions if the output is not periodic</summary>
+        public bool isOnBoundary(int x, int y) {
+            var size = this.input.outputSize;
+            return x < 0 || x >= size.x || y < 0 || y >= size.y;
+        }
+
         /// <summary>
-        /// Extracts every NxN pattern in the <c>source</c> considering their variants (rotations and flippings)
+        /// Extracts every NxN pattern in the <c>source</c> map considering their variants (rotations and flippings)
         /// </summary>
         static PatternStorage extractPatterns(Map source, int N) {
             var patterns = new PatternStorage(source, N);
             var variations = PatternUtil.variations; // TODO: use fixed or stackalloc
             var nVariations = variations.Length;
 
+            // TODO: handling periodic input
             for (int y = 0; y < source.height - N + 1; y++) {
                 for (int x = 0; x < source.width - N + 1; x++) {
                     for (int i = 0; i < nVariations; i++) {
@@ -93,67 +96,70 @@ namespace Wfc.Overlap {
         }
     }
 
+    /// <summary>Advances the state of WFC</summary>
     public class Observer {
-        Heap heap;
-        int nRemainings;
+        /// <summary>Used to pick up cell with least entropy</summary>
+        CellHeap heap;
+        int nRemainingCells;
         Propagator propagator;
 
         public Observer(Vec2 outputSize, State state) {
-            this.heap = new Heap(outputSize.area);
+            this.heap = new CellHeap(outputSize.area);
 
+            // make all the cells pickable
             for (int y = 0; y < outputSize.y; y++) {
                 for (int x = 0; x < outputSize.x; x++) {
                     this.heap.add(x, y, state.entropies[x, y].entropyWithNoise());
                 }
             }
 
-            this.nRemainings = outputSize.area;
+            this.nRemainingCells = outputSize.area;
             this.propagator = new Propagator();
         }
 
-        public void updateHeap(int x, int y, double entropy) {
-            this.heap.add(x, y, entropy);
+        public void updateHeap(int x, int y, double newEntropy) {
+            this.heap.add(x, y, newEntropy);
         }
 
         public WfcContext.AdvanceStatus advance(WfcContext cx) {
-            if (this.nRemainings <= 0) {
-                this.propagator.propagateAllRemovals(cx, this);
-                return WfcContext.AdvanceStatus.Success;
+            if (this.nRemainingCells <= 0) {
+                return WfcContext.AdvanceStatus.Success; // every cell is decided
             }
 
-            var(pos, isOnContradiction) = Observer.selectNextCell(ref this.heap, cx.state);
-            if (isOnContradiction) return WfcContext.AdvanceStatus.Fail;
+            var(pos, isContradicted) = Observer.selectNextCellToDecide(ref this.heap, cx.state);
+            if (isContradicted) {
+                System.Console.WriteLine("Unreachable. The heap is empty, but there are remaining cells");
+                return WfcContext.AdvanceStatus.Fail;
+            }
+
             var id = selectPatternForCell(pos.x, pos.y, cx.state, cx.model.patterns, cx.random);
             this.decidePatternForCell(pos.x, pos.y, id, cx.state, cx.model.patterns, this.propagator);
             return this.propagator.propagateAllRemovals(cx, this);
         }
 
-        /// <summary>
-        /// Select one of the cells with least total weight. Cell with least uncernity.
-        /// Returns (pos, isOnContradiction)
-        /// </summary>
+        /// <summary>Returns (pos, isOnContradiction)</summary>
         /// <remark>The intent is to minimize the risk of contradiction</summary>
-        static(Vec2, bool) selectNextCell(ref Heap heap, State state) {
+        static(Vec2, bool) selectNextCellToDecide(ref CellHeap heap, State state) {
             while (heap.hasAnyElement()) {
                 var cell = heap.pop();
                 if (state.entropies[cell.x, cell.y].isDecided) continue;
                 return (new Vec2(cell.x, cell.y), false);
             }
-            System.Console.WriteLine("Unreachable. The heap is empty, but there are remaining cells");
+            // contradicted
             return (new Vec2(-1, -1), true);
         }
 
         /// <summary>Choose a possible pattern for an unlocked cell randomly in respect of weights of patterns</summary>
         static PatternId selectPatternForCell(int x, int y, State state, PatternStorage patterns, System.Random rnd) {
-            var totalWeight = state.entropies[x, y].totalWeight;
-            int random = rnd.Next(0, totalWeight); // [0, totalWeight) < totalWeight
+            int random = rnd.Next(0, state.entropies[x, y].totalWeight);
 
-            int nPatterns = patterns.len;
             int sumWeight = 0;
-            for (int id = 0; id < nPatterns; id++) {
-                if (!state.isCompatible(x, y, new PatternId(id))) continue;
-                sumWeight += patterns[id].weight;
-                if (sumWeight > random) return new PatternId(id);
+            for (int id_ = 0; id_ < patterns.len; id_++) {
+                var id = new PatternId(id_);
+                if (!state.isPossible(x, y, id)) continue;
+
+                sumWeight += patterns[id_].weight;
+                if (sumWeight > random) return id;
             }
 
             System.Console.WriteLine("ERROR: tried to select a pattern for a contradicted cell");
@@ -163,97 +169,103 @@ namespace Wfc.Overlap {
         /// <summary>Lockin a cell into a <c>Pattern</c>. Collapse, observe</summary>
         /// <remark>Every pattern is decided through this method</remark>
         void decidePatternForCell(int x, int y, PatternId id, State state, PatternStorage patterns, Propagator propagator) {
-            state.onDecidePattern(x, y);
-            this.nRemainings -= 1;
+            state.onDecidePattern(x, y, patterns[id.asIndex].weight);
+            this.nRemainingCells -= 1;
 
-            // remove all other possible patterns for the cell
+            // remove all other possible patterns for the cell and propagete the effect (reducing enabler counts)
             var nPatterns = patterns.len;
             for (int i = 0; i < nPatterns; i++) {
-                // skip illegal patterns and the pattern locked into
-                if (state.isCompatible(x, y, new PatternId(i)) == false || i == id.asIndex) continue;
-                // remove the pattern from the legality distribution
-                // (without updating weight, entropy and enabler counts)
-                state.removePattern(x, y, new PatternId(i));
-                propagator.addRemoval(x, y, new PatternId(i));
+                var otherId = new PatternId(i);
+                if (!state.isPossible(x, y, otherId) || i == id.asIndex) continue;
+                state.removePattern(x, y, otherId); // no need to update entropy cache for a decided cell
+                propagator.addRemoval(x, y, otherId);
             }
         }
     }
 
     public class Propagator {
-        /// <summary>FIFO</summary>
-        Queue<TileRemoval> removals;
+        /// <summary>LIFO</summary>
+        Stack<TileRemoval> removals;
 
         public Propagator() {
-            this.removals = new Queue<TileRemoval>(10);
+            this.removals = new Stack<TileRemoval>(10);
         }
 
         struct TileRemoval {
-            public int x;
-            public int y;
-            /// <summary>The cell is locked in to this <c>PatternId</c></summary>
+            public Vec2 pos;
             public PatternId id;
 
             public TileRemoval(int x, int y, PatternId id) {
-                this.x = x;
-                this.y = y;
+                this.pos = new Vec2(x, y);
                 this.id = id;
             }
         }
 
         public void addRemoval(int x, int y, PatternId id) {
-            this.removals.Enqueue(new TileRemoval(x, y, id));
+            this.removals.Push(new TileRemoval(x, y, id));
         }
 
         public WfcContext.AdvanceStatus propagateAllRemovals(WfcContext cx, Observer observer) {
-            while (this.removals.Count > 0) {
-                var removal = this.removals.Dequeue();
-                var status = this.propagateRemoval(removal, cx, observer);
+            // propagate the effect of a removal
+            while (true) {
+                if (this.removals.Count == 0) break;
+                var status = this.propagateRemoval(this.removals.Pop(), cx, observer);
                 if (status != WfcContext.AdvanceStatus.Continue) return status;
             }
+            // observe next cell
             return WfcContext.AdvanceStatus.Continue;
         }
 
-        // TODO: use fixed, stackalloc or int to enum
-        static OverlappingDirection[] dirs = new [] {
-            OverlappingDirection.N, OverlappingDirection.E, OverlappingDirection.S, OverlappingDirection.W
-        };
-        static(int, int) [] dirVecs = new [] {
+        static Vec2[] dirVecs = new [] {
             // N, E, S, W
-            (0, -1), (1, 0), (0, 1), (-1, 0)
+            new Vec2(0, -1), new Vec2(1, 0), new Vec2(0, 1), new Vec2(-1, 0)
         };
 
+        /// <summary>Reduces enabler counts around the cell</summary>
         WfcContext.AdvanceStatus propagateRemoval(TileRemoval removal, WfcContext cx, Observer observer) {
             int nPatterns = cx.model.patterns.len;
+            var outputSize = cx.model.input.outputSize;
+
             for (int dirIndex = 0; dirIndex < 4; dirIndex++) {
-                int neighborX = removal.x + dirVecs[dirIndex].Item1;
-                int neighborY = removal.y + dirVecs[dirIndex].Item2;
-                if (cx.model.input.isOnBoundary(neighborX, neighborY)) continue;
-                var dirFromNeighbor = dirs[dirIndex].opposite();
+                var neighborPos = removal.pos + dirVecs[dirIndex];
+
+                // filter out positions outside of the output map
+                // (if we don't need to use periodic input)
+                if (cx.model.isOnBoundary(neighborPos.x, neighborPos.y)) continue;
+
+                // for periodic output
+                neighborPos += outputSize;
+                neighborPos %= outputSize;
+
+                var dirFromNeighbor = ((OverlappingDirection) dirIndex).opposite();
 
                 for (int i = 0; i < nPatterns; i++) {
                     var neighborId = new PatternId(i);
 
-                    {
-                        // not an enabler
-                        if (!cx.model.rule.isLegalSafe(neighborId, removal.id, dirFromNeighbor)) continue;
-                        // not a possible pattern
-                        if (!cx.state.isCompatible(neighborX, neighborY, neighborId)) continue;
-                    }
+                    // skip some combinations (not an enabler or already propagated)
+                    if (!cx.model.rule.canOverlap(neighborId, dirFromNeighbor, removal.id)) continue;
+                    if (!cx.state.isPossible(neighborPos.x, neighborPos.y, neighborId)) continue;
 
-                    bool isOnZeroCount = cx.state.enablerCounts.reduce(neighborX, neighborY, neighborId, dirFromNeighbor);
-                    if (!isOnZeroCount) continue;
+                    // update the enabler count
+                    bool doRemove = cx.state.enablerCounts.decrement(neighborPos.x, neighborPos.y, neighborId, dirFromNeighbor);
+                    if (!doRemove) continue;
 
-                    // let's remove the pattern
-                    cx.state.removePatternUpdatingEntropy(neighborX, neighborY, neighborId, cx.model.patterns);
-                    if (cx.state.entropies[neighborX, neighborY].totalWeight == 0) {
-                        return WfcContext.AdvanceStatus.Fail; // contradiction
-                    }
-
-                    // and propagate the removal
-                    observer.updateHeap(neighborX, neighborY, cx.state.entropies[neighborX, neighborY].entropyWithNoise());
-                    this.addRemoval(neighborX, neighborY, neighborId);
+                    var status = this.removePatternOfNeighbor(neighborPos.x, neighborPos.y, neighborId, cx, observer);
+                    if (status != WfcContext.AdvanceStatus.Continue) return status;
                 }
             }
+
+            return WfcContext.AdvanceStatus.Continue;
+        }
+
+        WfcContext.AdvanceStatus removePatternOfNeighbor(int x, int y, PatternId id, WfcContext cx, Observer observer) {
+            // let's remove the pattern
+            bool isOnContradiction = cx.state.removePatternUpdatingEntropy(x, y, id, cx.model.patterns);
+            if (isOnContradiction) return WfcContext.AdvanceStatus.Fail; // impossible to solve
+            observer.updateHeap(x, y, cx.state.entropies[x, y].entropyWithNoise());
+
+            // and propagate the removal (recursively)
+            this.addRemoval(x, y, id);
 
             return WfcContext.AdvanceStatus.Continue;
         }

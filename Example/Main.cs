@@ -4,20 +4,22 @@ using Wfc.Overlap;
 
 namespace Wfc.Example {
     class Program {
+        private const string Path = "Example/Res/T.txt";
+
         static void Main(string[] args) {
             var sourceMap = getSource();
+            var outputSize = new Vec2(4, 4);
 
-            WfcContext cx;
-            bool isFirst = true;
-            while (true) {
-                cx = new WfcContext(sourceMap, 3, new Vec2(50, 50));
-                if (isFirst) {
-                    // debugPrintA(cx);
-                }
-                if (cx.run()) break;
-                isFirst = false;
+            WfcContext cx = new WfcContext(sourceMap, 3, outputSize);
+            debugPrintInput(cx);
+
+            // run until success
+            while (!cx.run()) {
+                cx = new WfcContext(sourceMap, 3, outputSize);
             }
-            debugPrintB(cx);
+
+            Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
+            debugPrintOutput(cx);
         }
 
         static string nl => System.Environment.NewLine;
@@ -28,35 +30,42 @@ namespace Wfc.Example {
             // var sourceMap = loadAsciiMap("Example/Res/wide.txt", new Vec2(7, 7));
             // var sourceMap = loadAsciiMap("Example/Res/rect.txt", new Vec2(9, 9));
             // var sourceMap = loadAsciiMap("Example/Res/curve.txt", new Vec2(7, 7));
-            var sourceMap = loadAsciiMap("Example/Res/T.txt", new Vec2(7, 7));
+            var sourceMap = loadAsciiMap("Example/Res/test.txt", new Vec2(6, 6));
+            // var sourceMap = loadAsciiMap(Path, new Vec2(7, 7));
             return sourceMap;
-        }
-
-        static void debugPrintA(WfcContext cx) {
-            Console.WriteLine("======================");
-            cx.model.patterns.print();
-            Console.WriteLine("======================");
-            cx.model.rule.print(cx.model.patterns.len);
-
-            var state = new State(50, 50, cx.model.patterns, ref cx.model.rule);
-            Test.printInitialEnableCounter(50, 50, cx.model.patterns, ref cx.model.rule);
-        }
-
-        static void debugPrintB(WfcContext cx) {
-            var model = cx.model;
-            var input = model.input;
-            var output = cx.state.getOutput(input.outputSize.x, input.outputSize.y, cx.model.input.source, input.N, cx.model.patterns);
-
-            {
-                Console.WriteLine("=== Output: ===");
-                output.print();
-            }
         }
 
         static Map loadAsciiMap(string path, Vec2 inputSize) {
             string asciiMap = File.ReadAllText(path);
-            Console.WriteLine($@"=== Source map ==={nl}{asciiMap}{nl}");
             return MapExt.fromString(asciiMap, inputSize.x, inputSize.y);
+        }
+
+        static void debugPrintInput(WfcContext cx) {
+            // print the extracted patterns
+            Console.WriteLine("======================");
+            cx.model.patterns.print();
+            Console.WriteLine("======================");
+
+            // print initial enabler counts
+            var state = new State(50, 50, cx.model.patterns, ref cx.model.rule);
+            Test.printInitialEnableCounter(50, 50, cx.model.patterns, ref cx.model.rule);
+
+            // print input map
+            Console.WriteLine($@"=== Source map==={nl}");
+            cx.model.input.source.print();
+            Console.WriteLine("");
+
+            // print adjacency rules over the extracted patterns
+            // cx.model.rule.print(cx.model.patterns.len);
+        }
+
+        static void debugPrintOutput(WfcContext cx) {
+            var model = cx.model;
+            var input = model.input;
+            var output = cx.state.getOutput(input.outputSize.x, input.outputSize.y, cx.model.input.source, input.N, cx.model.patterns);
+
+            Console.WriteLine("=== Output: ===");
+            output.print();
         }
     }
 }

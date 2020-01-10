@@ -17,6 +17,15 @@ namespace Wfc {
 
         public int area => this.x * this.y;
 
+        /// <summary>
+        /// Consider this vector as a corner of a rectangle and see if it contains a point
+        /// </summary>
+        public bool contains(Vec2 other) {
+            if (other.x < 0 || other.x >= this.x) return false;
+            if (other.y < 0 || other.y >= this.y) return false;
+            return true;
+        }
+
         // operators
         public static bool operator ==(Vec2 v1, Vec2 v2) => v1.Equals(v2);
         public static bool operator !=(Vec2 v1, Vec2 v2) => !v1.Equals(v2);
@@ -29,6 +38,7 @@ namespace Wfc {
         public static Vec2 operator *(Vec2 v1, int i2) => new Vec2(v1.x * i2, v1.y * i2);
         public static Vec2 operator *(int i1, Vec2 v2) => new Vec2(i1 * v2.x, i1 * v2.y);
         public static Vec2 operator /(Vec2 v1, int i2) => new Vec2(v1.x / i2, v1.y / i2);
+        public static Vec2 operator %(Vec2 v1, Vec2 v2) => new Vec2(v1.x % v2.x, v1.y % v2.y);
 
         public override string ToString() => $"({x}, {y})";
         public override bool Equals(object obj) => obj is Vec2 ? Equals((Vec2) obj) : false;
