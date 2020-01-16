@@ -14,12 +14,37 @@ namespace Wfc.Example {
             debugPrintInput(cx);
 
             // run until success
-            while (!cx.run()) {
+            // while (!cx.run()) {
+            //     cx = new WfcContext(sourceMap, 3, outputSize);
+            // }
+            // debugPrintOutput(cx);
+
+            // try until solve
+
+            while (true) {
+                bool didSuccess = false;
+                foreach(var status in cx.runIter()) {
+                    debugPrintOutput(cx);
+                    switch (status) {
+                        case WfcContext.AdvanceStatus.Continue:
+                            continue; // advance WFC
+                        case WfcContext.AdvanceStatus.Success:
+                            didSuccess = true;
+                            break; // finish
+                        case WfcContext.AdvanceStatus.Fail:
+                            break; // retry
+                    }
+                    break;
+                }
+                if (didSuccess) break;
+                System.Console.WriteLine($"=== RETRY ===");
+                System.Console.WriteLine($"=== RETRY ===");
+                System.Console.WriteLine($"=== RETRY ===");
                 cx = new WfcContext(sourceMap, 3, outputSize);
             }
 
             Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
-            debugPrintOutput(cx);
+            Test.testEveryColumn(cx.state, ref cx.model.rule, cx.model.patterns);
         }
 
         static string nl => System.Environment.NewLine;

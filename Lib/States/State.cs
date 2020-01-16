@@ -33,7 +33,7 @@ namespace Wfc.Overlap {
         public void onDecidePattern(int x, int y, int weight) {
             var newCache = this.entropies[x, y];
             newCache.isDecided = true;
-            newCache.totalWeight = weight; // used to detect contradiction on propagations
+            newCache.totalWeight = weight; // update the total weight so that contradiction can be detected on propagations
             this.entropies[x, y] = newCache;
         }
 
@@ -93,7 +93,7 @@ namespace Wfc.Overlap {
 
             // TODO: debug print
             // it must be same as `outputW * outputH`
-            System.Console.WriteLine($"num of compatible patterns: {this.possibilities.items.Where(x => x).Count()}");
+            // System.Console.WriteLine($"num of compatible patterns: {this.possibilities.items.Where(x => x).Count()}");
             return map;
         }
         #endregion

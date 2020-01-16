@@ -32,13 +32,33 @@ namespace Wfc.Overlap {
             }
         }
 
+        /// <summary>To observe generation</summary>
+        public IEnumerable<AdvanceStatus> runIter() {
+            var observer = new Observer(this.model.input.outputSize, this.state);
+            while (true) {
+                var status = observer.advance(this);
+                yield return status;
+                System.Console.WriteLine(status);
+                switch (status) {
+                    case AdvanceStatus.Continue:
+                        break;
+                    case AdvanceStatus.Success:
+                        System.Console.WriteLine("SUCCESS");
+                        yield break;
+                    case AdvanceStatus.Fail:
+                        System.Console.WriteLine("FAIL");
+                        yield break;
+                }
+            }
+        }
+
         public enum AdvanceStatus {
+            /// <summary>Just in proress</summary>
+            Continue,
             /// <summary>Every cell is filled in respect to the local similarity constraint (<c>AdjacencyRule</c>)</summary>
             Success,
             /// <summary>A contradiction is reached, where some cell has no possible pattern</summary>
             Fail,
-            /// <summary>Just in proress</summary>
-            Continue,
         }
     }
 
@@ -68,9 +88,8 @@ namespace Wfc.Overlap {
             this.rule = new AdjacencyRule(this.patterns, input.source);
         }
 
-        // TODO: handling periodic output
-        /// <summary>Filters positions if the output is not periodic</summary>
-        public bool isOnBoundary(int x, int y) {
+        /// <summary>If the output is not periodic, filter out positions outside of the output area</summary>
+        public bool filterPos(int x, int y) {
             var size = this.input.outputSize;
             return x < 0 || x >= size.x || y < 0 || y >= size.y;
         }
@@ -105,6 +124,8 @@ namespace Wfc.Overlap {
 
         public Observer(Vec2 outputSize, State state) {
             this.heap = new CellHeap(outputSize.area);
+            this.nRemainingCells = outputSize.area;
+            this.propagator = new Propagator();
 
             // make all the cells pickable
             for (int y = 0; y < outputSize.y; y++) {
@@ -112,9 +133,6 @@ namespace Wfc.Overlap {
                     this.heap.add(x, y, state.entropies[x, y].entropyWithNoise());
                 }
             }
-
-            this.nRemainingCells = outputSize.area;
-            this.propagator = new Propagator();
         }
 
         public void updateHeap(int x, int y, double newEntropy) {
@@ -122,9 +140,7 @@ namespace Wfc.Overlap {
         }
 
         public WfcContext.AdvanceStatus advance(WfcContext cx) {
-            if (this.nRemainingCells <= 0) {
-                return WfcContext.AdvanceStatus.Success; // every cell is decided
-            }
+            if (this.nRemainingCells <= 0) return WfcContext.AdvanceStatus.Success; // every cell is decided
 
             var(pos, isContradicted) = Observer.selectNextCellToDecide(ref this.heap, cx.state);
             if (isContradicted) {
@@ -132,9 +148,11 @@ namespace Wfc.Overlap {
                 return WfcContext.AdvanceStatus.Fail;
             }
 
-            var id = selectPatternForCell(pos.x, pos.y, cx.state, cx.model.patterns, cx.random);
+            var id = Observer.selectPatternForCell(pos.x, pos.y, cx.state, cx.model.patterns, cx.random);
             this.decidePatternForCell(pos.x, pos.y, id, cx.state, cx.model.patterns, this.propagator);
-            return this.propagator.propagateAllRemovals(cx, this);
+            return this.propagator.propagateRec(cx, this) ?
+                WfcContext.AdvanceStatus.Fail :
+                WfcContext.AdvanceStatus.Continue;
         }
 
         /// <summary>Returns (pos, isOnContradiction)</summary>
@@ -145,8 +163,7 @@ namespace Wfc.Overlap {
                 if (state.entropies[cell.x, cell.y].isDecided) continue;
                 return (new Vec2(cell.x, cell.y), false);
             }
-            // contradicted
-            return (new Vec2(-1, -1), true);
+            return (new Vec2(-1, -1), true); // contradicted
         }
 
         /// <summary>Choose a possible pattern for an unlocked cell randomly in respect of weights of patterns</summary>
@@ -172,13 +189,14 @@ namespace Wfc.Overlap {
             state.onDecidePattern(x, y, patterns[id.asIndex].weight);
             this.nRemainingCells -= 1;
 
-            // remove all other possible patterns for the cell and propagete the effect (reducing enabler counts)
+            // setup next propagation
             var nPatterns = patterns.len;
             for (int i = 0; i < nPatterns; i++) {
                 var otherId = new PatternId(i);
                 if (!state.isPossible(x, y, otherId) || i == id.asIndex) continue;
-                state.removePattern(x, y, otherId); // no need to update entropy cache for a decided cell
-                propagator.addRemoval(x, y, otherId);
+
+                state.removePattern(x, y, otherId);
+                propagator.onDecidePattern(x, y, otherId);
             }
         }
     }
@@ -201,19 +219,20 @@ namespace Wfc.Overlap {
             }
         }
 
-        public void addRemoval(int x, int y, PatternId id) {
+        /// <summary>Setting up a removal, which will be recursively propagated</summary>
+        public void onDecidePattern(int x, int y, PatternId id) {
             this.removals.Push(new TileRemoval(x, y, id));
         }
 
-        public WfcContext.AdvanceStatus propagateAllRemovals(WfcContext cx, Observer observer) {
+        /// <summary>True if contradicted</summary>
+        public bool propagateRec(WfcContext cx, Observer observer) {
             // propagate the effect of a removal
             while (true) {
                 if (this.removals.Count == 0) break;
-                var status = this.propagateRemoval(this.removals.Pop(), cx, observer);
-                if (status != WfcContext.AdvanceStatus.Continue) return status;
+                bool isContradicted = this.propagateRemoval(this.removals.Pop(), cx, observer);
+                if (isContradicted) return true;
             }
-            // observe next cell
-            return WfcContext.AdvanceStatus.Continue;
+            return false;
         }
 
         static Vec2[] dirVecs = new [] {
@@ -221,53 +240,53 @@ namespace Wfc.Overlap {
             new Vec2(0, -1), new Vec2(1, 0), new Vec2(0, 1), new Vec2(-1, 0)
         };
 
-        /// <summary>Reduces enabler counts around the cell</summary>
-        WfcContext.AdvanceStatus propagateRemoval(TileRemoval removal, WfcContext cx, Observer observer) {
+        struct Neighbor {
+            public Vec2 pos;
+            public PatternId id;
+        }
+
+        /// <summary>Reduces enabler counts around the cell. True if contradicted</summary>
+        bool propagateRemoval(TileRemoval removal, WfcContext cx, Observer observer) {
             int nPatterns = cx.model.patterns.len;
             var outputSize = cx.model.input.outputSize;
 
+            var nb = new Neighbor { };
             for (int dirIndex = 0; dirIndex < 4; dirIndex++) {
-                var neighborPos = removal.pos + dirVecs[dirIndex];
-
-                // filter out positions outside of the output map
-                // (if we don't need to use periodic input)
-                if (cx.model.isOnBoundary(neighborPos.x, neighborPos.y)) continue;
+                nb.pos = removal.pos + dirVecs[dirIndex];
+                if (cx.model.filterPos(nb.pos.x, nb.pos.y)) continue;
 
                 // for periodic output
-                neighborPos += outputSize;
-                neighborPos %= outputSize;
+                nb.pos += outputSize;
+                nb.pos %= outputSize;
 
                 var dirFromNeighbor = ((OverlappingDirection) dirIndex).opposite();
-
                 for (int i = 0; i < nPatterns; i++) {
-                    var neighborId = new PatternId(i);
+                    nb.id = new PatternId(i);
 
-                    // skip some combinations (not an enabler or already propagated)
-                    if (!cx.model.rule.canOverlap(neighborId, dirFromNeighbor, removal.id)) continue;
-                    if (!cx.state.isPossible(neighborPos.x, neighborPos.y, neighborId)) continue;
+                    // skip some combinations (not an enabler or already disabled)
+                    if (!cx.model.rule.canOverlap(nb.id, dirFromNeighbor, removal.id)) continue;
+                    if (!cx.state.isPossible(nb.pos.x, nb.pos.y, nb.id)) continue;
 
-                    // update the enabler count
-                    bool doRemove = cx.state.enablerCounts.decrement(neighborPos.x, neighborPos.y, neighborId, dirFromNeighbor);
+                    // decrement the enabler count
+                    bool doRemove = cx.state.enablerCounts.decrement(nb.pos.x, nb.pos.y, nb.id, dirFromNeighbor);
                     if (!doRemove) continue;
 
-                    var status = this.removePatternOfNeighbor(neighborPos.x, neighborPos.y, neighborId, cx, observer);
-                    if (status != WfcContext.AdvanceStatus.Continue) return status;
+                    bool isContradicted = this.onRecursion(nb.pos.x, nb.pos.y, nb.id, cx, observer);
+                    if (isContradicted) return true;
                 }
             }
 
-            return WfcContext.AdvanceStatus.Continue;
+            return false;
         }
 
-        WfcContext.AdvanceStatus removePatternOfNeighbor(int x, int y, PatternId id, WfcContext cx, Observer observer) {
-            // let's remove the pattern
-            bool isOnContradiction = cx.state.removePatternUpdatingEntropy(x, y, id, cx.model.patterns);
-            if (isOnContradiction) return WfcContext.AdvanceStatus.Fail; // impossible to solve
+        /// <summary>Called when a next removal is found. Returns true if we're on contradiction</summary>
+        bool onRecursion(int x, int y, PatternId id, WfcContext cx, Observer observer) {
+            // remove the pattern
+            if (cx.state.removePatternUpdatingEntropy(x, y, id, cx.model.patterns)) return true;
+
             observer.updateHeap(x, y, cx.state.entropies[x, y].entropyWithNoise());
-
-            // and propagate the removal (recursively)
-            this.addRemoval(x, y, id);
-
-            return WfcContext.AdvanceStatus.Continue;
+            this.removals.Push(new TileRemoval(x, y, id));
+            return false;
         }
     }
 }

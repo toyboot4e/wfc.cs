@@ -65,7 +65,7 @@ namespace Wfc.Overlap {
         }
 
         /// <summary>
-        /// No enabler in more than or equal to one direction
+        /// No enabler in any direction
         /// </summary>
         bool isPatternDisabled(int x, int y, PatternId id) {
             for (int d = 0; d < 4; d++) {
@@ -121,6 +121,7 @@ namespace Wfc.Overlap {
         /// <summary>
         /// Sum of weights of remaining patterns. Used to calculate entropy / check if a cell is contradicted
         /// </summary>
+        /// <remark>Must be tracked even when a cell is locked into a pattern</remark>
         public int totalWeight;
         // TODO: remove entropy
         /// <summary>sum [weight_i * log_2(weight_i)]</summary>
@@ -139,7 +140,8 @@ namespace Wfc.Overlap {
             }
 
             return new EntropyCacheForCell {
-                totalWeight = totalWeight,
+                isDecided = false,
+                    totalWeight = totalWeight,
                     cachedExpr = entropyCache,
             };
         }

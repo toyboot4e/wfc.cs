@@ -32,7 +32,7 @@ namespace Wfc.Overlap {
                 for (int to = from; to < nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
                         var dir = (OverlappingDirection) d;
-                        bool canOverlap = AdjacencyRule.testCompatibility(from, to, dir, patterns, source);
+                        bool canOverlap = AdjacencyRule.testCompatibility(from, dir, to, patterns, source);
                         this.cache.add(canOverlap);
                     }
                 }
@@ -40,7 +40,7 @@ namespace Wfc.Overlap {
         }
 
         /// <summary>Used to create cache for the overlapping model</summary>
-        static bool testCompatibility(int from, int to, OverlappingDirection dir, PatternStorage patterns, Map source) {
+        static bool testCompatibility(int from, OverlappingDirection dir, int to, PatternStorage patterns, Map source) {
             int N = patterns.N; // patterns has size of NxN
             var fromPattern = patterns[from];
             var toPattern = patterns[to];
@@ -68,7 +68,7 @@ namespace Wfc.Overlap {
             int i = from_.asIndex;
             int j = to_.asIndex;
             if (i > j) {
-                // swap the the patterns
+                // swap the the patterns so that i <= j
                 i = i + j; // a + b
                 j = i - j; // (a + b) - b (=a)
                 i = i - j; // (a + b) - a (=b)
