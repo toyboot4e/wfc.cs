@@ -4,18 +4,21 @@ namespace Wfc.Overlap {
     /// The local similarity constraint is achieved by just ensuring adjacent overlapping patterns are legal
     /// </remark>
     public struct AdjacencyRule {
-        RectArray<bool> cache;
+        RectArray<bool> cache; // continuous in direction, toPattern, then fromPattern
         public int nPatterns;
 
-        int index(int from, int to) {
-            //       to
-            //     0123
-            // f 0 0123
-            // r 1  456
-            // o 2   78
-            // m 3    9 (symmetric parts are not cached)
-            //     (top + bottom) * height / 2 + remaining
-            return (this.nPatterns + this.nPatterns - (from - 1)) * from / 2 + (to - from);
+        bool this[int from, int dir, int to] {
+            get {
+                //       to
+                //     0123
+                // f 0 0123
+                // r 1  456
+                // o 2   78
+                // m 3    9 (from <= to; symmetric parts are not cached)
+                //     (top + bottom) * height / 2 + remaining
+                int index = (this.nPatterns + this.nPatterns - (from - 1)) * from / 2 + (to - from);
+                return this.cache[dir, index];
+            }
         }
 
         /// <summary>Creates an <c>AdjacencyRule</c> for the overlapping model</summary>
@@ -41,7 +44,7 @@ namespace Wfc.Overlap {
 
         /// <summary>Used to create cache for the overlapping model</summary>
         static bool testCompatibility(int from, OverlappingDirection dir, int to, PatternStorage patterns, Map source) {
-            int N = patterns.N; // patterns has size of NxN
+            int N = patterns.N; // patterns have size of NxN
             var fromPattern = patterns[from];
             var toPattern = patterns[to];
             // TODO: use row/col vector
@@ -51,10 +54,10 @@ namespace Wfc.Overlap {
                     // get local positions in each pattern
                     var downLocal = new Vec2(col, row);
                     var upLocal = new Vec2(col, row + 1);
-                    // rotate them to get actual local positions (relative one to the left-up corners of the patterns)
+                    // apply the direction
                     downLocal = dir.applyAsRotation(downLocal, N);
                     upLocal = dir.applyAsRotation(upLocal, N);
-                    // convert them (local positions) to global positions (position in the source)
+                    // convert them (local positions) into global positions (position in the source)
                     var downGlobal = fromPattern.localPosToSourcePos(downLocal, N);
                     var upGlobal = toPattern.localPosToSourcePos(upLocal, N);
                     // test the equaility
@@ -64,7 +67,7 @@ namespace Wfc.Overlap {
             return true;
         }
 
-        public bool canOverlap(PatternId from_, OverlappingDirection direction, PatternId to_) {
+        public bool canOverlap(PatternId from_, OverlappingDirection dir, PatternId to_) {
             int i = from_.asIndex;
             int j = to_.asIndex;
             if (i > j) {
@@ -73,15 +76,15 @@ namespace Wfc.Overlap {
                 j = i - j; // (a + b) - b (=a)
                 i = i - j; // (a + b) - a (=b)
                 // and invert the direction
-                direction = direction.opposite();
+                dir = dir.opposite();
             }
 
-            return this.cache[(int) direction, this.index(i, j)];
+            return this[i, (int) dir, j];
         }
 
         /// <remark>Can overlap</remark>
         public bool canOverlapUnsafe(PatternId from, OverlappingDirection d, PatternId to) {
-            return this.cache[(int) d, this.index(from.asIndex, to.asIndex)];
+            return this[from.asIndex, (int) d, to.asIndex];
         }
     }
 }

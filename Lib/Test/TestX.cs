@@ -35,16 +35,17 @@ namespace Wfc.Overlap {
         }
 
         public static void printInitialEnableCounter(int width, int height, PatternStorage patterns, ref AdjacencyRule rule) {
-            System.Console.WriteLine($"=== Enabler count ===");
+            System.Console.WriteLine($"=== Initial enabler count ===");
 
-            var initial = EnablerCounter.initial(width, height, patterns, ref rule);
+            var counts = EnablerCounter.initial(width, height, patterns, ref rule);
             int nPatterns = patterns.len;
 
-            for (int id = 0; id < nPatterns; id++) {
-                System.Console.Write($"{id}: ");
+            for (int id_ = 0; id_ < nPatterns; id_++) {
+                System.Console.Write($"{id_}: ");
+                var id = new PatternId(id_);
                 for (int d = 0; d < 4; d++) {
                     var dir = (OverlappingDirection) d;
-                    int count = initial[0, 0, new PatternId(id), dir];
+                    int count = counts[0, 0, id, dir];
                     System.Console.Write($"{dir}: {count}, ");
                 }
                 System.Console.WriteLine("");

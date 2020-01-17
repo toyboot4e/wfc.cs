@@ -23,7 +23,7 @@ namespace Wfc {
         }
 
         public Tile tileAt(int x, int y, int N, Map source) {
-            var pos = this.offset + this.variant.apply(N, new Vec2(x, y));
+            var pos = this.offset + this.variant.apply(new Vec2(x, y), N);
             return source[pos.x, pos.y];
         }
     }
@@ -55,7 +55,7 @@ namespace Wfc {
         public Pattern this[int id] => this.buffer[id];
 
         /// <summary>Stores an extracted pattern considering duplicates</summary>
-        public void add(int x, int y, PatternVariation v) {
+        public void store(int x, int y, PatternVariation v) {
             var offset = new Vec2(x, y);
             var newPattern = new Pattern(offset, v);
 

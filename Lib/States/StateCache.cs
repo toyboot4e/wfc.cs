@@ -44,11 +44,9 @@ namespace Wfc.Overlap {
     // TODO: consider making it a struct (indexer doesn't require copy, does it?)
     /// <summary>(int, int, PatternId, OverlappingDirection) -> int</summary>
     public class EnablerCounter {
-        int width;
         CuboidArray<int> counts;
 
         EnablerCounter(int width, int height, int nPatterns) {
-            this.width = width;
             this.counts = new CuboidArray<int>(width, height, 4 * nPatterns);
         }
 
@@ -87,10 +85,10 @@ namespace Wfc.Overlap {
             for (int id_ = 0; id_ < nPatterns; id_++) {
                 var id = new PatternId(id_);
                 // sum up enablers for the pattern in each direction
-                for (int otherId = 0; otherId < nPatterns; otherId++) {
+                for (int otherId_ = 0; otherId_ < nPatterns; otherId_++) {
                     for (int d = 0; d < 4; d++) {
                         var dir = (OverlappingDirection) d;
-                        if (rule.canOverlap(id, dir, new PatternId(otherId))) {
+                        if (rule.canOverlap(id, dir, new PatternId(otherId_))) {
                             self[0, 0, id, dir] += 1;
                         }
                     }

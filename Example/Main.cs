@@ -8,10 +8,17 @@ namespace Wfc.Example {
 
         static void Main(string[] args) {
             var sourceMap = getSource();
-            var outputSize = new Vec2(4, 4);
+            // var outputSize = new Vec2(4, 4);
+            var outputSize = new Vec2(10, 10);
 
             WfcContext cx = new WfcContext(sourceMap, 3, outputSize);
             debugPrintInput(cx);
+
+            cx.runJustOnce();
+            cx.state.printAvaiablePatternCounts(outputSize, cx.model.patterns.len);
+
+            // cx.run();
+            // debugPrintOutput(cx);
 
             // run until success
             // while (!cx.run()) {
@@ -21,27 +28,28 @@ namespace Wfc.Example {
 
             // try until solve
 
-            while (true) {
-                bool didSuccess = false;
-                foreach(var status in cx.runIter()) {
-                    debugPrintOutput(cx);
-                    switch (status) {
-                        case WfcContext.AdvanceStatus.Continue:
-                            continue; // advance WFC
-                        case WfcContext.AdvanceStatus.Success:
-                            didSuccess = true;
-                            break; // finish
-                        case WfcContext.AdvanceStatus.Fail:
-                            break; // retry
-                    }
-                    break;
-                }
-                if (didSuccess) break;
-                System.Console.WriteLine($"=== RETRY ===");
-                System.Console.WriteLine($"=== RETRY ===");
-                System.Console.WriteLine($"=== RETRY ===");
-                cx = new WfcContext(sourceMap, 3, outputSize);
-            }
+            // while (true) {
+            //     bool didSuccess = false;
+            //     foreach(var status in cx.runIter()) {
+            //         debugPrintOutput(cx);
+            //         cx.state.printAvaiablePatternCounts(outputSize, cx.model.patterns.len);
+            //         switch (status) {
+            //             case WfcContext.AdvanceStatus.Continue:
+            //                 continue; // advance WFC
+            //             case WfcContext.AdvanceStatus.Success:
+            //                 didSuccess = true;
+            //                 break; // finish
+            //             case WfcContext.AdvanceStatus.Fail:
+            //                 break; // retry
+            //         }
+            //         break;
+            //     }
+            //     if (didSuccess) break;
+            //     System.Console.WriteLine($"=== RETRY ===");
+            //     System.Console.WriteLine($"=== RETRY ===");
+            //     System.Console.WriteLine($"=== RETRY ===");
+            //     cx = new WfcContext(sourceMap, 3, outputSize);
+            // }
 
             Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
             Test.testEveryColumn(cx.state, ref cx.model.rule, cx.model.patterns);

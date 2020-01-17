@@ -28,12 +28,13 @@ namespace Wfc {
     }
 
     public static class PatternVariantionExt {
-        public static Vec2 apply(this PatternVariation self, int N, Vec2 v) {
-            return applyInt((int) self, N - 1, v);
+        public static Vec2 apply(this PatternVariation self, Vec2 v, int N) {
+            return applyInt((int) self, v, N);
         }
 
         /// <remark>Can be used not only for <c>PatternVariant</c> but also for <c>OverlapDirection</c></remark>
-        public static Vec2 applyInt(int i, int n, Vec2 v) {
+        public static Vec2 applyInt(int i, Vec2 v, int n) {
+            n--;
             switch (i) {
                 // 0     90    180   270
                 // ##..  ...#  ....  ....
@@ -48,6 +49,7 @@ namespace Wfc {
                     return new Vec2(n - v.x, n - v.y);
                 case 3: // Rot270
                     return new Vec2(v.y, n - v.x);
+
                     // [-]   [|]   [/]   [\]
                     // ....  ..##  ....  #...
                     // ....  .##.  ..#.  ##..
@@ -69,7 +71,7 @@ namespace Wfc {
 
         /// <summary>Converts a point in a <c>Pattern</c> to one in the <c>source</c></summary>
         public static Vec2 localPosToSourcePos(this Pattern self, Vec2 localPosition, int N) {
-            return self.offset + self.variant.apply(N, localPosition);
+            return self.offset + self.variant.apply(localPosition, N);
         }
 
         /// <summary>Tests equality of two <c>Pattern<c/>s</summary>

@@ -26,31 +26,27 @@ namespace Wfc.Overlap {
             }
         }
 
-        /// <summary>The pattern is still compaible</summary>
+        /// <summary>Is the pattern still compaible</summary>
         public bool isPossible(int x, int y, PatternId id) => this.possibilities[x, y, id.asIndex];
 
-        /// <summary>Set a flag that the cell is locked into a pattern</summary>
-        public void onDecidePattern(int x, int y, int weight) {
+        /// <summary>Set a flag</summary>
+        public void onLockinPattern(int x, int y, int weight) {
             var newCache = this.entropies[x, y];
             newCache.isDecided = true;
-            newCache.totalWeight = weight; // update the total weight so that contradiction can be detected on propagations
+            newCache.totalWeight = weight; // update the total weight so that contradiction can be detected on a propagation
             this.entropies[x, y] = newCache;
         }
 
-        /// <summary>Never forget to <c>propagate</c> the effect reducing enabler counts</summary>
-        public void removePattern(int x, int y, PatternId id_) {
-            this.possibilities[x, y, id_.asIndex] = false;
+        public void removePattern(int x, int y, PatternId id) {
+            this.possibilities[x, y, id.asIndex] = false;
         }
 
-        /// <remark>Returns if the pattern is contradicted</remark>
-        public bool removePatternUpdatingEntropy(int x, int y, PatternId id_, PatternStorage patterns) {
-            var id = id_.asIndex;
-            var weight = patterns[id].weight;
-
-            this.possibilities[x, y, id] = false;
+        /// <remark>Returns if the cell is contradicted</remark>
+        public bool removePatternUpdatingEntropy(int x, int y, PatternId id, PatternStorage patterns) {
+            this.possibilities[x, y, id.asIndex] = false;
 
             var cache = this.entropies[x, y];
-            cache.reduceWeight(weight);
+            cache.reduceWeight(patterns[id.asIndex].weight);
             this.entropies[x, y] = cache;
 
             return cache.totalWeight == 0;
@@ -95,6 +91,21 @@ namespace Wfc.Overlap {
             // it must be same as `outputW * outputH`
             // System.Console.WriteLine($"num of compatible patterns: {this.possibilities.items.Where(x => x).Count()}");
             return map;
+        }
+
+        public void printAvaiablePatternCounts(Vec2 outputSize, int nPatterns) {
+            for (int y = 0; y < outputSize.y; y++) {
+                for (int x = 0; x < outputSize.x; x++) {
+
+                    int n = 0;
+                    for (int i = 0; i < nPatterns; i++) {
+                        if (this.possibilities[x, y, i]) n += 1;
+                    }
+
+                    System.Console.Write($"{n,2} ");
+                }
+                System.Console.WriteLine("");
+            }
         }
         #endregion
     }

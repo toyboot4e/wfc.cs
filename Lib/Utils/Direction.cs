@@ -9,7 +9,7 @@ namespace Wfc.Overlap {
 
     public static class OverlapDirectionExt {
         public static Vec2 applyAsRotation(this OverlappingDirection self, Vec2 v, int N) {
-            return PatternVariantionExt.applyInt((int) self, N - 1, v);
+            return PatternVariantionExt.applyInt((int) self, v, N);
         }
 
         public static OverlappingDirection opposite(this OverlappingDirection self) {
@@ -27,7 +27,7 @@ namespace Wfc.Overlap {
             throw new System.Exception("THE DIRECTION IS NOT IN [0, 3]");
         }
 
-        public static int opposite(int d) {
+        public static int oppositeInt(int d) {
             return (d + 2) % 2;
         }
     }

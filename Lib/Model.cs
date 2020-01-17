@@ -15,6 +15,12 @@ namespace Wfc.Overlap {
         }
 
         /// <summary>Returns if it succeeded</summary>
+        public void runJustOnce() {
+            var observer = new Observer(this.model.input.outputSize, this.state);
+            observer.advance(this);
+        }
+
+        /// <summary>Returns if it succeeded</summary>
         public bool run() {
             var observer = new Observer(this.model.input.outputSize, this.state);
             while (true) {
@@ -106,7 +112,7 @@ namespace Wfc.Overlap {
             for (int y = 0; y < source.height - N + 1; y++) {
                 for (int x = 0; x < source.width - N + 1; x++) {
                     for (int i = 0; i < nVariations; i++) {
-                        patterns.add(x, y, variations[i]);
+                        patterns.store(x, y, variations[i]);
                     }
                 }
             }
@@ -149,8 +155,10 @@ namespace Wfc.Overlap {
             }
 
             var id = Observer.selectPatternForCell(pos.x, pos.y, cx.state, cx.model.patterns, cx.random);
-            this.decidePatternForCell(pos.x, pos.y, id, cx.state, cx.model.patterns, this.propagator);
-            return this.propagator.propagateRec(cx, this) ?
+            Observer.lockinPatternForCell(pos.x, pos.y, id, cx.state, cx.model.patterns, this.propagator);
+            this.nRemainingCells -= 1;
+
+            return this.propagator.propagateAll(cx, this) ?
                 WfcContext.AdvanceStatus.Fail :
                 WfcContext.AdvanceStatus.Continue;
         }
@@ -185,22 +193,21 @@ namespace Wfc.Overlap {
 
         /// <summary>Lockin a cell into a <c>Pattern</c>. Collapse, observe</summary>
         /// <remark>Every pattern is decided through this method</remark>
-        void decidePatternForCell(int x, int y, PatternId id, State state, PatternStorage patterns, Propagator propagator) {
-            state.onDecidePattern(x, y, patterns[id.asIndex].weight);
-            this.nRemainingCells -= 1;
+        static void lockinPatternForCell(int x, int y, PatternId idToLockin, State state, PatternStorage patterns, Propagator propagator) {
+            state.onLockinPattern(x, y, patterns[idToLockin.asIndex].weight);
 
             // setup next propagation
-            var nPatterns = patterns.len;
-            for (int i = 0; i < nPatterns; i++) {
-                var otherId = new PatternId(i);
-                if (!state.isPossible(x, y, otherId) || i == id.asIndex) continue;
+            for (int i = 0; i < patterns.len; i++) {
+                var idToRemove = new PatternId(i);
+                if (!state.isPossible(x, y, idToRemove) || i == idToLockin.asIndex) continue;
 
-                state.removePattern(x, y, otherId);
-                propagator.onDecidePattern(x, y, otherId);
+                state.removePattern(x, y, idToRemove);
+                propagator.onLockIn(x, y, idToRemove);
             }
         }
     }
 
+    // TODO: cache for propagator??
     public class Propagator {
         /// <summary>LIFO</summary>
         Stack<TileRemoval> removals;
@@ -219,18 +226,17 @@ namespace Wfc.Overlap {
             }
         }
 
-        /// <summary>Setting up a removal, which will be recursively propagated</summary>
-        public void onDecidePattern(int x, int y, PatternId id) {
+        /// <summary>Add a removal, which will be propagated later</summary>
+        public void onLockIn(int x, int y, PatternId id) {
             this.removals.Push(new TileRemoval(x, y, id));
         }
 
-        /// <summary>True if contradicted</summary>
-        public bool propagateRec(WfcContext cx, Observer observer) {
+        // TODO: on lockin, just remove patterns for performance and then propagate
+        /// <summary>True if contradicted. Recursively propagates all the removals</summary>
+        public bool propagateAll(WfcContext cx, Observer observer) {
             // propagate the effect of a removal
-            while (true) {
-                if (this.removals.Count == 0) break;
-                bool isContradicted = this.propagateRemoval(this.removals.Pop(), cx, observer);
-                if (isContradicted) return true;
+            while (this.removals.Count > 0) {
+                if (this.propagateRemoval(this.removals.Pop(), cx, observer)) return true;
             }
             return false;
         }
@@ -263,16 +269,14 @@ namespace Wfc.Overlap {
                 for (int i = 0; i < nPatterns; i++) {
                     nb.id = new PatternId(i);
 
-                    // skip some combinations (not an enabler or already disabled)
+                    // skip some combinations (not an enabler or already removed)
                     if (!cx.model.rule.canOverlap(nb.id, dirFromNeighbor, removal.id)) continue;
                     if (!cx.state.isPossible(nb.pos.x, nb.pos.y, nb.id)) continue;
 
-                    // decrement the enabler count
-                    bool doRemove = cx.state.enablerCounts.decrement(nb.pos.x, nb.pos.y, nb.id, dirFromNeighbor);
-                    if (!doRemove) continue;
+                    // decrement the enabler count for the compatible pattern
+                    if (!cx.state.enablerCounts.decrement(nb.pos.x, nb.pos.y, nb.id, dirFromNeighbor)) continue;
 
-                    bool isContradicted = this.onRecursion(nb.pos.x, nb.pos.y, nb.id, cx, observer);
-                    if (isContradicted) return true;
+                    if (this.recPropagate(nb.pos.x, nb.pos.y, nb.id, cx, observer)) return true;
                 }
             }
 
@@ -280,8 +284,7 @@ namespace Wfc.Overlap {
         }
 
         /// <summary>Called when a next removal is found. Returns true if we're on contradiction</summary>
-        bool onRecursion(int x, int y, PatternId id, WfcContext cx, Observer observer) {
-            // remove the pattern
+        bool recPropagate(int x, int y, PatternId id, WfcContext cx, Observer observer) {
             if (cx.state.removePatternUpdatingEntropy(x, y, id, cx.model.patterns)) return true;
 
             observer.updateHeap(x, y, cx.state.entropies[x, y].entropyWithNoise());
