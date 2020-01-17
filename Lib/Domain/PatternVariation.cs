@@ -75,11 +75,11 @@ namespace Wfc {
         }
 
         /// <summary>Tests equality of two <c>Pattern<c/>s</summary>
-        public static bool isDuplicateOf(this Pattern self, Pattern another, Map source, int N) {
+        public static bool isDuplicateOf(this Pattern self, Pattern other, Map source, int N) {
             for (int j = 0; j < N; j++) {
                 for (int i = 0; i < N; i++) {
                     var posA = self.localPosToSourcePos(new Vec2(i, j), N);
-                    var posB = another.localPosToSourcePos(new Vec2(i, j), N);
+                    var posB = other.localPosToSourcePos(new Vec2(i, j), N);
                     if (source[posA.x, posA.y] != source[posB.x, posB.y]) {
                         return false;
                     }

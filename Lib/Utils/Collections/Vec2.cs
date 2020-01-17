@@ -1,3 +1,5 @@
+using System;
+
 namespace Wfc {
     public class Vec2 {
         public int x;
@@ -24,6 +26,10 @@ namespace Wfc {
             if (other.x < 0 || other.x >= this.x) return false;
             if (other.y < 0 || other.y >= this.y) return false;
             return true;
+        }
+
+        public int distanceInt() {
+            return (int) Math.Sqrt(this.x * this.x + this.y * this.y);
         }
 
         // operators

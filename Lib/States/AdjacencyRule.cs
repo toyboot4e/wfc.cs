@@ -43,7 +43,7 @@ namespace Wfc.Overlap {
         }
 
         /// <summary>Used to create cache for the overlapping model</summary>
-        static bool testCompatibility(int from, OverlappingDirection dir, int to, PatternStorage patterns, Map source) {
+        public static bool testCompatibility(int from, OverlappingDirection dir, int to, PatternStorage patterns, Map source) {
             int N = patterns.N; // patterns have size of NxN
             var fromPattern = patterns[from];
             var toPattern = patterns[to];

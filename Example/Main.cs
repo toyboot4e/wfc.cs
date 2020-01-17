@@ -9,22 +9,18 @@ namespace Wfc.Example {
         static void Main(string[] args) {
             var sourceMap = getSource();
             // var outputSize = new Vec2(4, 4);
-            var outputSize = new Vec2(10, 10);
+            var outputSize = new Vec2(36, 36);
 
             WfcContext cx = new WfcContext(sourceMap, 3, outputSize);
             debugPrintInput(cx);
 
-            cx.runJustOnce();
-            cx.state.printAvaiablePatternCounts(outputSize, cx.model.patterns.len);
-
-            // cx.run();
-            // debugPrintOutput(cx);
-
-            // run until success
-            // while (!cx.run()) {
-            //     cx = new WfcContext(sourceMap, 3, outputSize);
-            // }
-            // debugPrintOutput(cx);
+            // run until succeed
+            while (!cx.run()) {
+                cx = new WfcContext(sourceMap, 3, outputSize);
+            }
+            debugPrintOutput(cx);
+            var output = cx.getOutput();
+            Wfc.Segments.Circle.print(ref output);
 
             // try until solve
 
@@ -62,8 +58,10 @@ namespace Wfc.Example {
             // var sourceMap = loadAsciiMap("Example/Res/c.txt", new Vec2(7, 7));
             // var sourceMap = loadAsciiMap("Example/Res/wide.txt", new Vec2(7, 7));
             // var sourceMap = loadAsciiMap("Example/Res/rect.txt", new Vec2(9, 9));
+            var sourceMap = loadAsciiMap("Example/Res/rooms.txt", new Vec2(16, 16));
             // var sourceMap = loadAsciiMap("Example/Res/curve.txt", new Vec2(7, 7));
-            var sourceMap = loadAsciiMap("Example/Res/test.txt", new Vec2(6, 6));
+            // bug: no enabler in some direction
+            // var sourceMap = loadAsciiMap("Example/Res/test.txt", new Vec2(6, 6));
             // var sourceMap = loadAsciiMap(Path, new Vec2(7, 7));
             return sourceMap;
         }
