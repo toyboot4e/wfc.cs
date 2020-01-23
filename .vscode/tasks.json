@@ -2,15 +2,26 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "Build (Debug)",
+            "type": "shell",
+            "group": "build",
             "command": "dotnet",
-            "type": "process",
             "args": [
                 "build",
                 "${workspaceFolder}/Example/Example.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Build and Run (Debug)",
+            "type": "shell",
+            "group": "build",
+            "osx": {
+                "command": "dotnet run --project ${workspaceFolder}/Example/Example.csproj"
+            },
+            "dependsOn": "Build (Debug)",
             "problemMatcher": "$msCompile"
         },
         {
