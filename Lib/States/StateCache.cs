@@ -1,12 +1,12 @@
 using System;
 
 namespace Wfc.Overlap {
-    /// <summary>Used to pick up a cell with least entropy</summary>
-    /// <remark>Add some noise to make choices random</remark>
-    public class Heap {
+    /// <summary>Heap of cells used to pick up one with least entropy</summary>
+    /// <remark>Add some noise to make random choices</remark>
+    public struct CellHeap {
         MinHeap<PosWithEntropy> buffer;
 
-        public Heap(int capacity) {
+        public CellHeap(int capacity) {
             this.buffer = new MinHeap<PosWithEntropy>(capacity);
         }
 
@@ -22,7 +22,8 @@ namespace Wfc.Overlap {
             return this.buffer.pop();
         }
 
-        // TODO: is this fast in MinMap?
+        // TODO: is this fast? (boxing not happening?)
+        ///<renark>Never use it without noise</remark>
         public struct PosWithEntropy : System.IComparable<PosWithEntropy> {
             public int x;
             public int y;
@@ -34,19 +35,18 @@ namespace Wfc.Overlap {
                 this.entropy = entropy;
             }
 
-            // FIXME: never use it without noise
             public int CompareTo(PosWithEntropy other) {
                 return this.entropy - other.entropy > 0 ? 1 : -1;
             }
         }
     }
 
+    // TODO: consider making it a struct (indexer doesn't require copy, does it?)
+    /// <summary>(int, int, PatternId, OverlappingDirection) -> int</summary>
     public class EnablerCounter {
-        int width;
         CuboidArray<int> counts;
 
         EnablerCounter(int width, int height, int nPatterns) {
-            this.width = width;
             this.counts = new CuboidArray<int>(width, height, 4 * nPatterns);
         }
 
@@ -55,14 +55,17 @@ namespace Wfc.Overlap {
             set => this.counts[x, y, (int) dir + 4 * id.asIndex] = value;
         }
 
-        public void decrement(int x, int y, PatternId id, OverlappingDirection dir) {
-            this[x, y, id, dir] -= 1;
+        /// <summary>Returns if the pattern get disabled</summary>
+        public bool decrement(int x, int y, PatternId id, OverlappingDirection direction) {
+            bool isPatternAlreadyDisabled = this.isPatternDisabled(x, y, id);
+            this[x, y, id, direction] -= 1;
+            return !isPatternAlreadyDisabled && this[x, y, id, direction] == 0;
         }
 
         /// <summary>
-        /// The pattern is already forbidden if there is no enabler for it in any direction
+        /// No enabler in any direction
         /// </summary>
-        public bool anyZeroEnablerFor(int x, int y, PatternId id) {
+        bool isPatternDisabled(int x, int y, PatternId id) {
             for (int d = 0; d < 4; d++) {
                 if (this[x, y, id, (OverlappingDirection) d] == 0) return true;
             }
@@ -73,34 +76,33 @@ namespace Wfc.Overlap {
             int nPatterns = patterns.len;
             var self = new EnablerCounter(width, height, nPatterns);
 
-            // TODO: make it no need to add
+            // fill the buffer
             for (int i = 0; i < width * height * 4 * nPatterns; i++) {
                 self.counts.add(0);
             }
 
-            // TODO: separate me and copy it to every cell
-            // first, let's count enablers in (0, 0) with the adjacency rule:
-            for (int idToCount = 0; idToCount < nPatterns; idToCount++) {
-                var id = new PatternId(idToCount);
-                // sum up enablers for each adjacency rule with direction
-                for (int otherId = 0; otherId < nPatterns; otherId++) {
+            // store initial enabler counts at (0, 0):
+            for (int id_ = 0; id_ < nPatterns; id_++) {
+                var id = new PatternId(id_);
+                // sum up enablers for the pattern in each direction
+                for (int otherId_ = 0; otherId_ < nPatterns; otherId_++) {
                     for (int d = 0; d < 4; d++) {
-                        if (rule.isLegalSafe(id, new PatternId(otherId), (OverlappingDirection) d)) {
-                            self[0, 0, id, (OverlappingDirection) d] += 1;
+                        var dir = (OverlappingDirection) d;
+                        if (rule.canOverlap(id, dir, new PatternId(otherId_))) {
+                            self[0, 0, id, dir] += 1;
                         }
                     }
                 }
             }
 
             // copy it to other cells
-            // TODO: more performance with indexing
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    for (int id = 0; id < nPatterns; id++) {
+                    for (int id_ = 0; id_ < nPatterns; id_++) {
+                        var id = new PatternId(id_);
                         for (int d = 0; d < 4; d++) {
-                            var id_ = new PatternId(id);
                             var dir = (OverlappingDirection) d;
-                            self[x, y, id_, dir] = self[0, 0, id_, dir];
+                            self[x, y, id, dir] = self[0, 0, id, dir];
                         }
                     }
                 }
@@ -111,19 +113,19 @@ namespace Wfc.Overlap {
     }
 
     // TODO: use float
-    // TODO: export entropy expression
-    public struct EntropyCacheData {
-        /// <remark>Is this cell collapsed</summary>
+    public struct EntropyCacheForCell {
+        /// <remark>Is collapsed</summary>
         public bool isDecided;
-        /// <summary>Sum of weights of remaining patterns</summary>
+        /// <summary>
+        /// Sum of weights of remaining patterns. Used to calculate entropy / check if a cell is contradicted
+        /// </summary>
+        /// <remark>Must be tracked even when a cell is locked into a pattern</remark>
         public int totalWeight;
         // TODO: remove entropy
-        /// <summary>sum [weight_i * log(weight_i)]</summary>
+        /// <summary>sum [weight_i * log_2(weight_i)]</summary>
         double cachedExpr;
-        static Random random = new Random();
 
-        /// <summary>Creates initial <c>EntropyCache</c> for the <c>patterns</c></summary>
-        public static EntropyCacheData fromPatterns(PatternStorage patterns) {
+        public static EntropyCacheForCell initial(PatternStorage patterns) {
             int nPatterns = patterns.len;
 
             int totalWeight = 0;
@@ -132,27 +134,30 @@ namespace Wfc.Overlap {
             for (int i = 0; i < nPatterns; i++) {
                 var weight = patterns[i].weight;
                 totalWeight += weight;
-                entropyCache += weight * Math.Log(weight, 2);
+                entropyCache += weight * Math.Log2(weight);
             }
 
-            return new EntropyCacheData {
-                totalWeight = totalWeight,
+            return new EntropyCacheForCell {
+                isDecided = false,
+                    totalWeight = totalWeight,
                     cachedExpr = entropyCache,
             };
         }
 
-        /// <summray>Information entropy of a cell</summary>
+        /// <summray>Information entropy of a cell with noise for random picking</summary>
         /// <remark>
-        /// S(X) = -sum [p_i * log(p_i)] in statics
-        /// S(X) = log(totalWeight) - sum [weight_i * log(weight_i)] / totalWeight
-        /// where base of log = 2
+        /// S(X) = -sum [p_i * log_2(p_i)] in statics.
+        /// S(X) = log_2(totalWeight) - sum [weight_i * log_2(weight_i)] / totalWeight.
         /// </remark>
         public double entropyWithNoise() {
-            return Math.Log(this.totalWeight, 2) - this.cachedExpr / this.totalWeight + random.NextDouble() * 1E-6;
+            return Math.Log2(this.totalWeight) - this.cachedExpr / this.totalWeight + noise();
         }
 
-        /// <summary>Updates self (<c>EntropyCacheData</c>)</summary>
-        public void onReduce(int weight) {
+        static Random random = new Random();
+        double noise() => random.NextDouble() * 1E-6;
+
+        /// <summary>Used to updates caches for entropy (which is for random picking)</summary>
+        public void reduceWeight(int weight) {
             this.totalWeight -= weight;
             this.cachedExpr -= (double) weight * (double) Math.Log(this.totalWeight, 2);
         }

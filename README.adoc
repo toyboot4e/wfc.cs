@@ -1,0 +1,10 @@
+= Wfc
+
+wfc.cs is a _dirty_ implementation of the https://github.com/mxgmn/WaveFunctionCollapse[WaveFunctionCollapse algorithm] of overlapping model for a tile maps.
+
+To run the example:
+
+[source,sh]
+----
+$ dotnet run --project Example/Example.csproj
+----

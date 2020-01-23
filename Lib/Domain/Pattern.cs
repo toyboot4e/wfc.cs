@@ -2,19 +2,16 @@ using System.Collections.Generic;
 
 namespace Wfc {
     /// <summary>
-    /// A local pattern in a source <c>Map</c> with frequency with size of NxN.
-    /// Equality of two <c>Pattern</c>s can be tested through an extension method.
+    /// A local pattern of a source <c>Map</c> with variation (rotation, flipping or none)
     /// </summary>
     /// <remark>
-    /// Each local position can be converted to one in a source map with <c>this.variant.apply(this)</c>.
+    /// Each position in a pattern can be converted into one in a source map using <c>this.variant.apply</c>.
     /// This implementation is like a slice, but <c>Pattern</c> can also be implemented as an array. Which is better?
     /// </remark>
-    // TODO: DIP for the arbitary of implementations
     public class Pattern {
         public readonly Vec2 offset;
         public readonly PatternVariation variant;
-        /// <summary>The number of times it appears in the source <c>Map</c></summary>
-        /// <remark>Frequency</remark>
+        /// <summary>Frequency. The number of times it appears in a source <c>Map</c></summary>
         public int weight;
 
         public void incWeight() => this.weight += 1;
@@ -26,23 +23,24 @@ namespace Wfc {
         }
 
         public Tile tileAt(int x, int y, int N, Map source) {
-            var pos = this.offset + this.variant.apply(N, new Vec2(x, y));
+            var pos = this.offset + this.variant.apply(new Vec2(x, y), N);
             return source[pos.x, pos.y];
         }
     }
 
-    /// <summary>Wraps an integer as a special type</summary>
+    /// <summary>Wraps an index integer as a special type</summary>
     public struct PatternId {
         public readonly int asIndex;
 
-        public PatternId(int data) {
-            this.asIndex = data;
+        public PatternId(int index) {
+            this.asIndex = index;
         }
     }
 
     /// <summary>Stores every <c>Pattern</c> of a source <c>Map</c></summary>
     public class PatternStorage {
         public Map source;
+        /// <summary>Each pattern has a size of <c>N</c>x<c>N</c></summary>
         public readonly int N;
         readonly List<Pattern> buffer;
 
@@ -56,10 +54,8 @@ namespace Wfc {
 
         public Pattern this[int id] => this.buffer[id];
 
-        // TODO: add indexer and hide buffer
-
         /// <summary>Stores an extracted pattern considering duplicates</summary>
-        public void add(int x, int y, PatternVariation v) {
+        public void store(int x, int y, PatternVariation v) {
             var offset = new Vec2(x, y);
             var newPattern = new Pattern(offset, v);
 

@@ -71,7 +71,7 @@ namespace Wfc {
         public static void print(this Pattern self, Map source, int N) {
             for (int j = 0; j < N; j++) {
                 for (int i = 0; i < N; i++) {
-                    var pos = self.offset + self.variant.apply(N, new Vec2(i, j));
+                    var pos = self.offset + self.variant.apply(new Vec2(i, j), N);
                     Console.Write(source[pos.x, pos.y].toChar());
                 }
                 Console.WriteLine();
@@ -98,7 +98,7 @@ namespace Wfc {
             for (int from = 0; from < self.nPatterns; from++) {
                 for (int to = from; to < self.nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
-                        if (!self.isLegalSafe(new PatternId(from), new PatternId(to), (OverlappingDirection) d)) continue;
+                        if (!self.canOverlap(new PatternId(from), (OverlappingDirection) d, new PatternId(to))) continue;
                         Console.WriteLine($"legal: {from} to {to} in {(OverlappingDirection) d}");
                     }
                 }

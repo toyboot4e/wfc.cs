@@ -1,7 +1,6 @@
 namespace Wfc {
     /// <summary>
-    /// Fills a cell in a map. Has size of 1x1. Corresponds to a pixel in texture mode.
-    /// Chunk of tiles is a <c>Map</c> or a part of it (a <c>Pattern</c>)
+    /// Fills a cell in a <c>Map</c>. Has size of 1x1. Corresponds to a pixel in "texture mode"
     /// </summary>
     public enum Tile {
         None = 0,
@@ -11,14 +10,14 @@ namespace Wfc {
         UpStair = 4,
     }
 
-    /// <summary>The domain, grid, cells of tiles</sumary>
+    /// <summary>Grid/cells of tiles</sumary>
     public class Map {
         public RectArray<Tile> tiles;
         public int width;
         public int height;
 
-        /// <summary>Creates a <c>Map</c> with capacity w * h</summary>
-        /// <remark>Never forget to add <c>Tile</c>s before accessing <c>tiles</c></remark>
+        /// <summary>Creates a <c>Map</c> with capacity (w * h)</summary>
+        /// <remark>Never forget to <c>add</c> <c>Tile</c>s before accessing <c>tiles</c></remark>
         public Map(int w, int h) {
             this.width = w;
             this.height = h;
