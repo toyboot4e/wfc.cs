@@ -1,17 +1,18 @@
 = Wfc
 
-wfc.cs is an implementation of the https://github.com/mxgmn/WaveFunctionCollapse[WaveFunctionCollapse algorithm] (OverlappingModel) for tile maps, based on [the post by gridbugs](https://gridbugs.org/wave-function-collapse/).
+wfc.cs is an implementation of the https://github.com/mxgmn/WaveFunctionCollapse[WaveFunctionCollapse algorithm] (OverlappingModel) for tile maps, based on the https://gridbugs.org/wave-function-collapse/[post by Grid Bugs].
 
-Note that it's not set up for others: not well refactored, the input file is hard coded, and even using uncommon format!
+Note that it's not set up for others: not well refactored, the input file being hard coded, and even uncommon format in use!
 
 == Notes
 
-* The OverlappingModel is really _slow_, so I'm considering using SimpleTiledModel following [Roguelike Tutorial - in Rust](https://bfnightly.bracketproductions.com/rustbook/chapter_33.html)
-* WFC can be used to fill a segment, like [done in Caves of Qud](https://www.youtube.com/watch?v=fnFj3dOKcIQ)
+The OverlappingModel is _really_ slow, so I'm considering using SimpleTiledModel following https://bfnightly.bracketproductions.com/rustbook/chapter_33.html[Roguelike Tutorial - in Rust]
+
+WFC can be used to fill a segment, like https://www.youtube.com/watch?v=fnFj3dOKcIQ[done in Caves of Qud]
 
 == Running an example
 
-If you're using VSCode, there's `.vscode/tasks.json` to run the Example project. Or run it typing some commands:
+If you're using VSCode, there's `.vscode/tasks.json`, so use _Cmd+Shift+B_ or _Ctrl+Shift+B_ to run the Example project. Or run it typing some commands:
 
 [source,sh]
 ----
@@ -113,13 +114,13 @@ SUCCESS
              ...........
 ----
 
-You'll find it's slow!
+Good. But you'll find it's slow!
 
 == TODO
 
 === High priority
 
-* remove entory and just use `totalWeight / maxTotalWeight`
+* remove entoropy and just use `totalWeight / maxTotalWeight`
 
 === Low priority
 
