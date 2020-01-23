@@ -30,7 +30,7 @@ namespace Wfc.Overlap {
             observer.advance(this);
         }
 
-        /// <summary>Returns if it succeeded</summary>
+        /// <summary>Solves the problem with local similarity constraint. True if succeeded</summary>
         public bool run() {
             var observer = new Observer(this.model.input.outputSize, this.state);
             while (true) {
@@ -38,7 +38,7 @@ namespace Wfc.Overlap {
                     case AdvanceStatus.Continue:
                         continue;
                     case AdvanceStatus.Success:
-                        // TODO: debug print
+                        // TODO: remove debug print
                         System.Console.WriteLine("SUCCESS");
                         return true;
                     case AdvanceStatus.Fail:

@@ -7,8 +7,7 @@ namespace Wfc.Example {
         private const string Path = "Example/Res/T.txt";
 
         static void Main(string[] args) {
-            var sourceMap = getSource();
-            // var outputSize = new Vec2(4, 4);
+            var sourceMap = getSource(); // hard coded!
             var outputSize = new Vec2(36, 36);
 
             WfcContext cx = new WfcContext(sourceMap, 3, outputSize);
@@ -16,37 +15,15 @@ namespace Wfc.Example {
 
             // run until succeed
             while (!cx.run()) {
+                // reset and restart
                 cx = new WfcContext(sourceMap, 3, outputSize);
             }
-            debugPrintOutput(cx);
+
             var output = cx.getOutput();
+            debugPrintOutput(ref output);
             Wfc.Segments.Circle.print(ref output);
 
-            // try until solve
-
-            // while (true) {
-            //     bool didSuccess = false;
-            //     foreach(var status in cx.runIter()) {
-            //         debugPrintOutput(cx);
-            //         cx.state.printAvaiablePatternCounts(outputSize, cx.model.patterns.len);
-            //         switch (status) {
-            //             case WfcContext.AdvanceStatus.Continue:
-            //                 continue; // advance WFC
-            //             case WfcContext.AdvanceStatus.Success:
-            //                 didSuccess = true;
-            //                 break; // finish
-            //             case WfcContext.AdvanceStatus.Fail:
-            //                 break; // retry
-            //         }
-            //         break;
-            //     }
-            //     if (didSuccess) break;
-            //     System.Console.WriteLine($"=== RETRY ===");
-            //     System.Console.WriteLine($"=== RETRY ===");
-            //     System.Console.WriteLine($"=== RETRY ===");
-            //     cx = new WfcContext(sourceMap, 3, outputSize);
-            // }
-
+            // make sure the output is fine
             Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
             Test.testEveryColumn(cx.state, ref cx.model.rule, cx.model.patterns);
         }
@@ -54,16 +31,14 @@ namespace Wfc.Example {
         static string nl => System.Environment.NewLine;
 
         static Map getSource() {
+            var path = loadAsciiMap("Example/Res/rooms.txt", inputSize : new Vec2(16, 16));
+            return path;
             // var sourceMap = loadAsciiMap("Example/Res/a.txt", new Vec2(6, 6));
             // var sourceMap = loadAsciiMap("Example/Res/c.txt", new Vec2(7, 7));
             // var sourceMap = loadAsciiMap("Example/Res/wide.txt", new Vec2(7, 7));
             // var sourceMap = loadAsciiMap("Example/Res/rect.txt", new Vec2(9, 9));
-            var sourceMap = loadAsciiMap("Example/Res/rooms.txt", new Vec2(16, 16));
             // var sourceMap = loadAsciiMap("Example/Res/curve.txt", new Vec2(7, 7));
-            // bug: no enabler in some direction
             // var sourceMap = loadAsciiMap("Example/Res/test.txt", new Vec2(6, 6));
-            // var sourceMap = loadAsciiMap(Path, new Vec2(7, 7));
-            return sourceMap;
         }
 
         static Map loadAsciiMap(string path, Vec2 inputSize) {
@@ -90,13 +65,44 @@ namespace Wfc.Example {
             // cx.model.rule.print(cx.model.patterns.len);
         }
 
-        static void debugPrintOutput(WfcContext cx) {
-            var model = cx.model;
-            var input = model.input;
-            var output = cx.state.getOutput(input.outputSize.x, input.outputSize.y, cx.model.input.source, input.N, cx.model.patterns);
-
+        static void debugPrintOutput(ref Map output) {
             Console.WriteLine("=== Output: ===");
             output.print();
+        }
+
+        // not in use
+        static void runStepByStep(WfcContext cx) {
+            var outputSize = cx.model.input.outputSize;
+            while (true) {
+                if (update()) break;
+                System.Console.WriteLine($"============================");
+                System.Console.WriteLine($">>>>>>>>>>> RETRY <<<<<<<<<<");
+                System.Console.WriteLine($"============================");
+                cx = new WfcContext(cx.model.input.source, 3, outputSize);
+            }
+
+            Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
+            Test.testEveryColumn(cx.state, ref cx.model.rule, cx.model.patterns);
+
+            bool update() {
+                foreach(var status in cx.runIter()) {
+                    {
+                        var temp = cx.getOutput();
+                        debugPrintOutput(ref temp);
+                        // cx.state.printAvaiablePatternCounts(outputSize, cx.model.patterns.len);
+                    }
+
+                    switch (status) {
+                        case WfcContext.AdvanceStatus.Continue:
+                            continue; // advance WFC
+                        case WfcContext.AdvanceStatus.Success:
+                            return true;
+                        case WfcContext.AdvanceStatus.Fail:
+                            return false;
+                    }
+                }
+                return false;
+            }
         }
     }
 }
