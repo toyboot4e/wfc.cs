@@ -94,11 +94,11 @@ namespace Wfc {
     }
 
     public static class AdjacencyRuleExt {
-        public static void print(this Rule self, int nPatterns) {
+        public static void print(this RuleData self, int nPatterns) {
             for (int from = 0; from < self.nPatterns; from++) {
                 for (int to = from; to < self.nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
-                        if (!self.canOverlap(new PatternId(from), (Dir4) d, new PatternId(to))) continue;
+                        if (!self.isLegal(new PatternId(from), (Dir4) d, new PatternId(to))) continue;
                         Console.WriteLine($"legal: {from} to {to} in {(Dir4) d}");
                     }
                 }

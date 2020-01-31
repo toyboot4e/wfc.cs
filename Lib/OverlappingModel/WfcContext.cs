@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Wfc.Overlap {
-    /// <summary>The top interface of the wave function collapse algorithm</summary>
+    /// <summary>Runs WFC</summary>
     public class WfcContext {
         public readonly Model model;
         public readonly State state;
@@ -22,6 +22,15 @@ namespace Wfc.Overlap {
                 this.model.input.N,
                 this.model.patterns
             );
+        }
+
+        public enum AdvanceStatus {
+            /// <summary>Just in proress</summary>
+            Continue,
+            /// <summary>Every cell is filled in respect to the local similarity constraint (<c>AdjacencyRule</c>)</summary>
+            Success,
+            /// <summary>A contradiction is reached, where some cell has no possible pattern</summary>
+            Fail,
         }
 
         /// <summary>Returns if it succeeded</summary>
@@ -66,15 +75,6 @@ namespace Wfc.Overlap {
                         yield break;
                 }
             }
-        }
-
-        public enum AdvanceStatus {
-            /// <summary>Just in proress</summary>
-            Continue,
-            /// <summary>Every cell is filled in respect to the local similarity constraint (<c>AdjacencyRule</c>)</summary>
-            Success,
-            /// <summary>A contradiction is reached, where some cell has no possible pattern</summary>
-            Fail,
         }
     }
 }

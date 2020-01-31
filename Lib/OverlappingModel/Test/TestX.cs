@@ -1,6 +1,6 @@
 namespace Wfc.Overlap {
     public class Test {
-        public static void testEveryRow(State state, ref Rule rule, PatternStorage patterns) {
+        public static void testEveryRow(State state, ref RuleData rule, PatternStorage patterns) {
             System.Console.WriteLine($"=== Test every row ===");
             int h = state.outputSize.y;
             int w = state.outputSize.x;
@@ -10,14 +10,14 @@ namespace Wfc.Overlap {
                     var fromId = state.patternIdAt(x, y, n);
                     var toId = state.patternIdAt(x + 1, y, n);
                     if (fromId == null || toId == null) continue;
-                    if (!rule.canOverlap(fromId.Value, Dir4.E, toId.Value)) {
+                    if (!rule.isLegal(fromId.Value, Dir4.E, toId.Value)) {
                         System.Console.WriteLine($"illegal: {x}, {y} ({fromId.Value.asIndex}) -> {x+1}, {y} ({toId.Value.asIndex})");
                     }
                 }
             }
         }
 
-        public static void testEveryColumn(State state, ref Rule rule, PatternStorage patterns) {
+        public static void testEveryColumn(State state, ref RuleData rule, PatternStorage patterns) {
             System.Console.WriteLine($"=== Test every column ===");
             int h = state.outputSize.y;
             int w = state.outputSize.x;
@@ -27,14 +27,14 @@ namespace Wfc.Overlap {
                     var fromId = state.patternIdAt(x, y, n);
                     var toId = state.patternIdAt(x, y + 1, n);
                     if (fromId == null || toId == null) continue;
-                    if (!rule.canOverlap(fromId.Value, Dir4.S, toId.Value)) {
+                    if (!rule.isLegal(fromId.Value, Dir4.S, toId.Value)) {
                         System.Console.WriteLine($"illegal: {x}, {y} ({fromId.Value.asIndex}) -> {x}, {y+1} ({toId.Value.asIndex})");
                     }
                 }
             }
         }
 
-        public static void printInitialEnableCounter(int width, int height, PatternStorage patterns, ref Rule rule) {
+        public static void printInitialEnableCounter(int width, int height, PatternStorage patterns, ref RuleData rule) {
             System.Console.WriteLine($"=== Initial enabler count ===");
 
             var counts = EnablerCounter.initial(width, height, patterns, ref rule);

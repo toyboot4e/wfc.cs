@@ -10,7 +10,7 @@ namespace Wfc.Overlap {
         /// <summary>Just for utility</summary>
         public Vec2i outputSize;
 
-        public State(int width, int height, PatternStorage patterns, ref Rule rule) {
+        public State(int width, int height, PatternStorage patterns, ref RuleData rule) {
             this.outputSize = new Vec2i(width, height);
             int nPatterns = patterns.len;
             this.possibilities = new Grid3D<bool>(width, height, nPatterns);

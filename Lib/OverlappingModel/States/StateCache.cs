@@ -72,7 +72,7 @@ namespace Wfc.Overlap {
             return false;
         }
 
-        public static EnablerCounter initial(int width, int height, PatternStorage patterns, ref Rule rule) {
+        public static EnablerCounter initial(int width, int height, PatternStorage patterns, ref RuleData rule) {
             int nPatterns = patterns.len;
             var self = new EnablerCounter(width, height, nPatterns);
 
@@ -88,7 +88,7 @@ namespace Wfc.Overlap {
                 for (int otherId_ = 0; otherId_ < nPatterns; otherId_++) {
                     for (int d = 0; d < 4; d++) {
                         var dir = (Dir4) d;
-                        if (rule.canOverlap(id, dir, new PatternId(otherId_))) {
+                        if (rule.isLegal(id, dir, new PatternId(otherId_))) {
                             self[0, 0, id, dir] += 1;
                         }
                     }
