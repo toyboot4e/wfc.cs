@@ -68,7 +68,7 @@ namespace Wfc {
             return new PatternId(index - offsetOfIndex);
         }
 
-        public Map getOutput(int outputW, int outputH, Map source, int N, PatternStorage patterns) {
+        public Map getOutput(int outputW, int outputH, ref Map source, int N, PatternStorage patterns) {
             int nPatterns = patterns.len;
             var map = new Map(outputW, outputH);
             for (int i = 0; i < outputW * outputH; i++) {

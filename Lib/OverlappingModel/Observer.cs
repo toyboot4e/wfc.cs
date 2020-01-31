@@ -134,7 +134,7 @@ namespace Wfc.Overlap {
         /// <summary>Reduces enabler counts around the cell. True if contradicted</summary>
         bool propagateRemoval(TileRemoval removal, WfcContext cx, Observer observer) {
             int nPatterns = cx.model.patterns.len;
-            var outputSize = cx.model.input.outputSize;
+            var outputSize = cx.model.outputSize;
 
             var nb = new Neighbor { };
             for (int dirIndex = 0; dirIndex < 4; dirIndex++) {

@@ -1,19 +1,13 @@
 namespace Wfc.Overlap {
     public static class ModelBuilder {
-        public static Model create(Map source, int N, Vec2i outputSize) {
-            var input = new Model.Input() {
-                source = source,
-                N = N,
-                outputSize = outputSize,
-            };
-            var patterns = RuleData.extractPatterns(input.source, input.N);
-            var rule = ModelBuilder.buildRule(patterns, source);
-
-            return new Model(input, patterns, rule);
+        public static Model create(ref Map source, int N, Vec2i outputSize) {
+            var patterns = RuleData.extractPatterns(ref source, N);
+            var rule = ModelBuilder.buildRule(patterns, ref source);
+            return new Model(outputSize, patterns, rule);
         }
 
         /// <summary>Creates an <c>AdjacencyRule</c> for the overlapping model</summary>
-        public static RuleData buildRule(PatternStorage patterns, Map source) {
+        public static RuleData buildRule(PatternStorage patterns, ref Map source) {
             var rule = new RuleData();
 
             int nPatterns = patterns.len;

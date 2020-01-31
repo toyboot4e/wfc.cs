@@ -10,16 +10,16 @@ namespace Wfc.Example {
             var sourceMap = getSource(); // hard coded!
             var outputSize = new Vec2i(36, 36);
 
-            var cx = WfcOverlap.create(sourceMap, 3, outputSize);
-            debugPrintInput(cx);
+            var cx = WfcOverlap.create(ref sourceMap, 3, outputSize);
+            debugPrintInput(cx, ref sourceMap);
 
             // run until succeed
             while (!cx.run()) {
                 // reset and restart
-                cx = WfcOverlap.create(sourceMap, 3, outputSize);
+                cx = WfcOverlap.create(ref sourceMap, 3, outputSize);
             }
 
-            var output = cx.getOutput();
+            var output = cx.getOutput(ref sourceMap);
             debugPrintOutput(ref output);
             Wfc.Segments.Circle.print(ref output);
 
@@ -46,7 +46,7 @@ namespace Wfc.Example {
             return MapExt.fromString(asciiMap, inputSize.x, inputSize.y);
         }
 
-        static void debugPrintInput(WfcContext cx) {
+        static void debugPrintInput(WfcContext cx, ref Map source) {
             // print the extracted patterns
             Console.WriteLine("======================");
             cx.model.patterns.print();
@@ -58,7 +58,7 @@ namespace Wfc.Example {
 
             // print input map
             Console.WriteLine($@"=== Source map==={nl}");
-            cx.model.input.source.print();
+            source.print();
             Console.WriteLine("");
 
             // print adjacency rules over the extracted patterns

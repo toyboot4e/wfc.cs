@@ -34,51 +34,29 @@ namespace Wfc {
                 }
             }
         }
-
-        public void onRestart(State state) {
-            this.state = state;
-        }
-
-        public Map getOutput() {
-            return this.state.getOutput(
-                this.model.input.outputSize.x,
-                this.model.input.outputSize.y,
-                this.model.input.source,
-                this.model.input.N,
-                this.model.patterns
-            );
-        }
     }
 
     public interface iObserver {
         WfcContext.AdvanceStatus advance(WfcContext cx);
     }
 
-    /// <summary>
-    /// Creates input for the wave function collapse algorithm (overlapping model)
-    /// i.e. patterns and a rule to place them
-    /// </summary>
+    /// <summary>Input to the core algorithm of WFC</summary>
     public class Model {
-        public Input input;
+        // public Input input;
+        public Vec2i outputSize;
         public PatternStorage patterns;
         public RuleData rule;
 
-        public Model(Input input, PatternStorage patterns, RuleData rule) {
-            this.input = input;
+        public Model(Vec2i outputSize, PatternStorage patterns, RuleData rule) {
+            // this.input = input;
+            this.outputSize = outputSize;
             this.patterns = patterns;
             this.rule = rule;
         }
 
-        /// <summary>Original input from a user</summary>
-        public class Input {
-            public Map source;
-            public int N;
-            public Vec2i outputSize;
-        }
-
         /// <summary>If the output is not periodic, filter out positions outside of the output area</summary>
         public bool filterPos(int x, int y) {
-            var size = this.input.outputSize;
+            var size = this.outputSize;
             return x < 0 || x >= size.x || y < 0 || y >= size.y;
         }
     }
