@@ -6,13 +6,14 @@ Note that it's not set up for others: not well refactored, the input file being 
 
 == Notes
 
-The OverlappingModel is _really_ slow, so I'm considering using SimpleTiledModel following https://bfnightly.bracketproductions.com/rustbook/chapter_33.html[Roguelike Tutorial - in Rust]
-
-WFC can be used to fill a segment, like https://www.youtube.com/watch?v=fnFj3dOKcIQ[done in Caves of Qud]
+* The OverlappingModel can be used to fill a segment, like https://www.youtube.com/watch?v=fnFj3dOKcIQ[done in Caves of Qud]
+* The OverlappingModel is _really_ slow, so I'm considering using adjacency constraints, which doesn't care about local similarity.
 
 == Running an example
 
-If you're using VSCode, there's `.vscode/tasks.json`, so use _Cmd+Shift+B_ or _Ctrl+Shift+B_ to run the Example project. Or run it typing some commands:
+It is hard coded to run the OverlappingModel with input `Example/Res/rooms.txt`.
+
+If you're using VSCode, there's `.vscode/tasks.json`, so type _Cmd+Shift+B_ or _Ctrl+Shift+B_ to run the Example project. Or run it typing some commands:
 
 [source,sh]
 ----
@@ -118,11 +119,15 @@ Good. But you'll find it's slow!
 
 == TODO
 
-=== High priority
+=== Adjacency model
+
+=== Improvements
 
 * remove entoropy and just use `totalWeight / maxTotalWeight`
+* backjumping for constant performance
+* seed-based output
 
-=== Low priority
+=== Features
 
-* make it more generic
 * add CLI
+* more generic domain (currently, it only takes `Floor` and `Wall`)

@@ -7,21 +7,18 @@ namespace Wfc.Example {
         private const string Path = "Example/Res/T.txt";
 
         static void Main(string[] args) {
-            var sourceMap = getSource(); // hard coded!
+            var source = getSourceMap(); // hard coded!
             var outputSize = new Vec2i(36, 36);
 
-            WfcContext cx = new WfcContext(sourceMap, 3, outputSize);
-            debugPrintInput(cx);
+            var cx = WfcAdjacency.create(ref source, 3, outputSize);
+            debugPrintInput(cx, ref source);
 
-            // run until succeed
             while (!cx.run()) {
-                // reset and restart
-                cx = new WfcContext(sourceMap, 3, outputSize);
+                cx = WfcAdjacency.create(ref source, 3, outputSize);
             }
 
-            var output = cx.getOutput();
+            var output = cx.getOutput(ref source);
             debugPrintOutput(ref output);
-            Wfc.Segments.Circle.print(ref output);
 
             // make sure the output is fine
             Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
@@ -30,7 +27,7 @@ namespace Wfc.Example {
 
         static string nl => System.Environment.NewLine;
 
-        static Map getSource() {
+        static Map getSourceMap() {
             var path = loadAsciiMap("Example/Res/rooms.txt", inputSize : new Vec2i(16, 16));
             return path;
             // var sourceMap = loadAsciiMap("Example/Res/a.txt", new Vec2(6, 6));
@@ -46,7 +43,7 @@ namespace Wfc.Example {
             return MapExt.fromString(asciiMap, inputSize.x, inputSize.y);
         }
 
-        static void debugPrintInput(WfcContext cx) {
+        static void debugPrintInput(WfcContext cx, ref Map source) {
             // print the extracted patterns
             Console.WriteLine("======================");
             cx.model.patterns.print();
@@ -58,7 +55,7 @@ namespace Wfc.Example {
 
             // print input map
             Console.WriteLine($@"=== Source map==={nl}");
-            cx.model.input.source.print();
+            source.print();
             Console.WriteLine("");
 
             // print adjacency rules over the extracted patterns
@@ -68,41 +65,10 @@ namespace Wfc.Example {
         static void debugPrintOutput(ref Map output) {
             Console.WriteLine("=== Output: ===");
             output.print();
-        }
-
-        // not in use
-        static void runStepByStep(WfcContext cx) {
-            var outputSize = cx.model.input.outputSize;
-            while (true) {
-                if (update()) break;
-                System.Console.WriteLine($"============================");
-                System.Console.WriteLine($">>>>>>>>>>> RETRY <<<<<<<<<<");
-                System.Console.WriteLine($"============================");
-                cx = new WfcContext(cx.model.input.source, 3, outputSize);
-            }
-
-            Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
-            Test.testEveryColumn(cx.state, ref cx.model.rule, cx.model.patterns);
-
-            bool update() {
-                foreach(var status in cx.runIter()) {
-                    {
-                        var temp = cx.getOutput();
-                        debugPrintOutput(ref temp);
-                        // cx.state.printAvaiablePatternCounts(outputSize, cx.model.patterns.len);
-                    }
-
-                    switch (status) {
-                        case WfcContext.AdvanceStatus.Continue:
-                            continue; // advance WFC
-                        case WfcContext.AdvanceStatus.Success:
-                            return true;
-                        case WfcContext.AdvanceStatus.Fail:
-                            return false;
-                    }
-                }
-                return false;
-            }
+            Console.WriteLine("");
+            Console.WriteLine("=== Output in a circle: ===");
+            Wfc.Segments.Circle.print(ref output);
+            Console.WriteLine("");
         }
     }
 }

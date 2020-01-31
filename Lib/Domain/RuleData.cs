@@ -43,7 +43,7 @@ namespace Wfc {
         /// <summary>
         /// Extracts every NxN pattern in the <c>source</c> map considering their variants (rotations and flippings)
         /// </summary>
-        public static PatternStorage extractPatterns(Map source, int N) {
+        public static PatternStorage extractPatterns(ref Map source, int N) {
             var patterns = new PatternStorage(source, N);
             var variations = PatternUtil.variations; // TODO: use fixed or stackalloc
             var nVariations = variations.Length;

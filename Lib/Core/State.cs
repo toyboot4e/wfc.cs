@@ -1,18 +1,17 @@
 using System.Linq;
 
-namespace Wfc.Overlap {
+namespace Wfc {
     /// <remark>Wave. Grid of states and caches for each cell</remark>
     public class State {
         public EnablerCounter enablerCounts;
         Grid3D<bool> possibilities;
         public Grid2D<EntropyCacheForCell> entropies;
-
-        /// <summary>Just for utility</summary>
-        public Vec2i outputSize;
+        public Vec2i gridSize;
 
         public State(int width, int height, PatternStorage patterns, ref RuleData rule) {
-            this.outputSize = new Vec2i(width, height);
             int nPatterns = patterns.len;
+            this.gridSize = new Vec2i(width, height);
+
             this.possibilities = new Grid3D<bool>(width, height, nPatterns);
             this.enablerCounts = EnablerCounter.initial(width, height, patterns, ref rule);
             this.entropies = new Grid2D<EntropyCacheForCell>(width, height);
@@ -56,8 +55,8 @@ namespace Wfc.Overlap {
         public PatternId? patternIdAt(int x, int y, int nPatterns) {
             if (!this.entropies[x, y].isDecided) return null;
 
-            var w = this.outputSize.x;
-            var h = this.outputSize.y;
+            var w = this.gridSize.x;
+            var h = this.gridSize.y;
 
             var offsetOfIndex = nPatterns * (x + w * y);
             var index = this.possibilities.items.FindIndex(offsetOfIndex, nPatterns, x => x);
@@ -68,34 +67,9 @@ namespace Wfc.Overlap {
             return new PatternId(index - offsetOfIndex);
         }
 
-        public Map getOutput(int outputW, int outputH, Map source, int N, PatternStorage patterns) {
-            int nPatterns = patterns.len;
-            var map = new Map(outputW, outputH);
-            for (int i = 0; i < outputW * outputH; i++) {
-                int x = i % outputW;
-                int y = i / outputW;
-                var patternId = this.patternIdAt(x, y, nPatterns);
-                if (patternId == null) {
-                    map.tiles.add(Tile.None);
-                    continue;
-                }
-                var pattern = patterns[((PatternId) patternId).asIndex];
-
-                // left-up corner of the pattern is used for the output
-                var sourcePos = pattern.localPosToSourcePos(new Vec2i(0, 0), N);
-                var tile = source[sourcePos.x, sourcePos.y];
-                map.tiles.add(tile);
-            }
-
-            // TODO: debug print
-            // it must be same as `outputW * outputH`
-            // System.Console.WriteLine($"num of compatible patterns: {this.possibilities.items.Where(x => x).Count()}");
-            return map;
-        }
-
-        public void printAvaiablePatternCounts(Vec2i outputSize, int nPatterns) {
-            for (int y = 0; y < outputSize.y; y++) {
-                for (int x = 0; x < outputSize.x; x++) {
+        public void printAvaiablePatternCounts(int nPatterns) {
+            for (int y = 0; y < this.gridSize.y; y++) {
+                for (int x = 0; x < this.gridSize.x; x++) {
 
                     int n = 0;
                     for (int i = 0; i < nPatterns; i++) {

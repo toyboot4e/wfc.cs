@@ -1,39 +1,17 @@
 namespace Wfc.Overlap {
-    /// <summary>
-    /// Creates input for the wave function collapse algorithm (overlapping model)
-    /// i.e. patterns and a rule to place them
-    /// </summary>
-    public class Model {
-        public Input input;
-        public PatternStorage patterns;
-        public RuleData rule;
-
-        /// <summary>Original input from a user</summary>
-        public class Input {
-            public Map source;
-            public int N;
-            public Vec2i outputSize;
-        }
-
-        public Model(Map source, int N, Vec2i outputSize) {
-            this.input = new Input() {
-                source = source,
-                N = N,
-                outputSize = outputSize,
-            };
-            var size = input.outputSize;
-            this.patterns = RuleData.extractPatterns(input.source, input.N);
-            this.rule = Model.buildRule(this.patterns, source);
-        }
-
-        /// <summary>If the output is not periodic, filter out positions outside of the output area</summary>
-        public bool filterPos(int x, int y) {
-            var size = this.input.outputSize;
-            return x < 0 || x >= size.x || y < 0 || y >= size.y;
+    public static class ModelBuilder {
+        public static Model create(ref Map source, int N, Vec2i outputSize) {
+            if (outputSize.x % N != 0 || outputSize.y % N != 0) {
+                throw new System.Exception($"output size {outputSize} is indivisible by N={N}");
+            }
+            var gridSize = outputSize / N;
+            var patterns = RuleData.extractPatterns(ref source, N);
+            var rule = ModelBuilder.buildRule(patterns, ref source);
+            return new Model(gridSize, patterns, rule);
         }
 
         /// <summary>Creates an <c>AdjacencyRule</c> for the overlapping model</summary>
-        public static RuleData buildRule(PatternStorage patterns, Map source) {
+        public static RuleData buildRule(PatternStorage patterns, ref Map source) {
             var rule = new RuleData();
 
             int nPatterns = patterns.len;
@@ -48,7 +26,7 @@ namespace Wfc.Overlap {
                 for (int to = from; to < nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
                         var dir = (Dir4) d;
-                        bool canOverlap = Model.testCompatibility(from, dir, to, patterns, source);
+                        bool canOverlap = ModelBuilder.testCompatibility(from, dir, to, patterns, source);
                         rule.cache.add(canOverlap);
                     }
                 }
