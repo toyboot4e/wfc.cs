@@ -1,8 +1,7 @@
 namespace Wfc.Overlap {
-    /// <summary>Index, cache of possible overlapping patterns</summary>
-    /// <remark>
-    /// The local similarity constraint is achieved by just ensuring adjacent overlapping patterns are legal
-    /// </remark>
+    /// <summary>
+    /// Compatibilities of patterns for the overlapping model <c>Rule</c>
+    /// </summary>
     public struct Rule {
         RectArray<bool> cache; // continuous in direction, toPattern, then fromPattern
         public int nPatterns;
@@ -34,7 +33,7 @@ namespace Wfc.Overlap {
             for (int from = 0; from < nPatterns; from++) {
                 for (int to = from; to < nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
-                        var dir = (OverlappingDirection) d;
+                        var dir = (Dir4) d;
                         bool canOverlap = Rule.testCompatibility(from, dir, to, patterns, source);
                         this.cache.add(canOverlap);
                     }
@@ -43,7 +42,7 @@ namespace Wfc.Overlap {
         }
 
         /// <summary>Used to create cache for the overlapping model</summary>
-        public static bool testCompatibility(int from, OverlappingDirection dir, int to, PatternStorage patterns, Map source) {
+        public static bool testCompatibility(int from, Dir4 dir, int to, PatternStorage patterns, Map source) {
             int N = patterns.N; // patterns have size of NxN
             var fromPattern = patterns[from];
             var toPattern = patterns[to];
@@ -67,7 +66,7 @@ namespace Wfc.Overlap {
             return true;
         }
 
-        public bool canOverlap(PatternId from_, OverlappingDirection dir, PatternId to_) {
+        public bool canOverlap(PatternId from_, Dir4 dir, PatternId to_) {
             int i = from_.asIndex;
             int j = to_.asIndex;
             if (i > j) {
@@ -82,8 +81,8 @@ namespace Wfc.Overlap {
             return this[i, (int) dir, j];
         }
 
-        /// <remark>Can overlap</remark>
-        public bool canOverlapUnsafe(PatternId from, OverlappingDirection d, PatternId to) {
+        /// <remark>Ensure from <= to</remark>
+        public bool canOverlapUnsafe(PatternId from, Dir4 d, PatternId to) {
             return this[from.asIndex, (int) d, to.asIndex];
         }
     }

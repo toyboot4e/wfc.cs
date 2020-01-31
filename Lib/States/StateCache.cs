@@ -50,13 +50,13 @@ namespace Wfc.Overlap {
             this.counts = new CuboidArray<int>(width, height, 4 * nPatterns);
         }
 
-        public int this[int x, int y, PatternId id, OverlappingDirection dir] {
+        public int this[int x, int y, PatternId id, Dir4 dir] {
             get => this.counts[x, y, (int) dir + 4 * id.asIndex];
             set => this.counts[x, y, (int) dir + 4 * id.asIndex] = value;
         }
 
         /// <summary>Returns if the pattern get disabled</summary>
-        public bool decrement(int x, int y, PatternId id, OverlappingDirection direction) {
+        public bool decrement(int x, int y, PatternId id, Dir4 direction) {
             bool isPatternAlreadyDisabled = this.isPatternDisabled(x, y, id);
             this[x, y, id, direction] -= 1;
             return !isPatternAlreadyDisabled && this[x, y, id, direction] == 0;
@@ -67,7 +67,7 @@ namespace Wfc.Overlap {
         /// </summary>
         bool isPatternDisabled(int x, int y, PatternId id) {
             for (int d = 0; d < 4; d++) {
-                if (this[x, y, id, (OverlappingDirection) d] == 0) return true;
+                if (this[x, y, id, (Dir4) d] == 0) return true;
             }
             return false;
         }
@@ -87,7 +87,7 @@ namespace Wfc.Overlap {
                 // sum up enablers for the pattern in each direction
                 for (int otherId_ = 0; otherId_ < nPatterns; otherId_++) {
                     for (int d = 0; d < 4; d++) {
-                        var dir = (OverlappingDirection) d;
+                        var dir = (Dir4) d;
                         if (rule.canOverlap(id, dir, new PatternId(otherId_))) {
                             self[0, 0, id, dir] += 1;
                         }
@@ -101,7 +101,7 @@ namespace Wfc.Overlap {
                     for (int id_ = 0; id_ < nPatterns; id_++) {
                         var id = new PatternId(id_);
                         for (int d = 0; d < 4; d++) {
-                            var dir = (OverlappingDirection) d;
+                            var dir = (Dir4) d;
                             self[x, y, id, dir] = self[0, 0, id, dir];
                         }
                     }

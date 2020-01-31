@@ -98,8 +98,8 @@ namespace Wfc {
             for (int from = 0; from < self.nPatterns; from++) {
                 for (int to = from; to < self.nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
-                        if (!self.canOverlap(new PatternId(from), (OverlappingDirection) d, new PatternId(to))) continue;
-                        Console.WriteLine($"legal: {from} to {to} in {(OverlappingDirection) d}");
+                        if (!self.canOverlap(new PatternId(from), (Dir4) d, new PatternId(to))) continue;
+                        Console.WriteLine($"legal: {from} to {to} in {(Dir4) d}");
                     }
                 }
             }

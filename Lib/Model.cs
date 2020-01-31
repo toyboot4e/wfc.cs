@@ -198,7 +198,7 @@ namespace Wfc.Overlap {
                 nb.pos += outputSize;
                 nb.pos %= outputSize;
 
-                var dirFromNeighbor = ((OverlappingDirection) dirIndex).opposite();
+                var dirFromNeighbor = ((Dir4) dirIndex).opposite();
                 for (int i = 0; i < nPatterns; i++) {
                     nb.id = new PatternId(i);
 
