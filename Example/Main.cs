@@ -10,13 +10,13 @@ namespace Wfc.Example {
             var sourceMap = getSource(); // hard coded!
             var outputSize = new Vec2i(36, 36);
 
-            WfcContext cx = new WfcContext(sourceMap, 3, outputSize);
+            var cx = WfcOverlap.create(sourceMap, 3, outputSize);
             debugPrintInput(cx);
 
             // run until succeed
             while (!cx.run()) {
                 // reset and restart
-                cx = new WfcContext(sourceMap, 3, outputSize);
+                cx = WfcOverlap.create(sourceMap, 3, outputSize);
             }
 
             var output = cx.getOutput();
@@ -68,41 +68,6 @@ namespace Wfc.Example {
         static void debugPrintOutput(ref Map output) {
             Console.WriteLine("=== Output: ===");
             output.print();
-        }
-
-        // not in use
-        static void runStepByStep(WfcContext cx) {
-            var outputSize = cx.model.input.outputSize;
-            while (true) {
-                if (update()) break;
-                System.Console.WriteLine($"============================");
-                System.Console.WriteLine($">>>>>>>>>>> RETRY <<<<<<<<<<");
-                System.Console.WriteLine($"============================");
-                cx = new WfcContext(cx.model.input.source, 3, outputSize);
-            }
-
-            Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
-            Test.testEveryColumn(cx.state, ref cx.model.rule, cx.model.patterns);
-
-            bool update() {
-                foreach(var status in cx.runIter()) {
-                    {
-                        var temp = cx.getOutput();
-                        debugPrintOutput(ref temp);
-                        // cx.state.printAvaiablePatternCounts(outputSize, cx.model.patterns.len);
-                    }
-
-                    switch (status) {
-                        case WfcContext.AdvanceStatus.Continue:
-                            continue; // advance WFC
-                        case WfcContext.AdvanceStatus.Success:
-                            return true;
-                        case WfcContext.AdvanceStatus.Fail:
-                            return false;
-                    }
-                }
-                return false;
-            }
         }
     }
 }

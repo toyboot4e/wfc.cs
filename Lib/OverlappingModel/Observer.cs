@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Wfc.Overlap {
     /// <summary>Advances the state of WFC</summary>
-    public class Observer {
+    public class Observer : iObserver {
         /// <summary>Used to pick up cell with least entropy</summary>
         CellHeap heap;
         int nRemainingCells;

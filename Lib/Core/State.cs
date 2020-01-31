@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Wfc.Overlap {
+namespace Wfc {
     /// <remark>Wave. Grid of states and caches for each cell</remark>
     public class State {
         public EnablerCounter enablerCounts;

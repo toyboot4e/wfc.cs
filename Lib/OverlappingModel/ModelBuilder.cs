@@ -1,35 +1,15 @@
 namespace Wfc.Overlap {
-    /// <summary>
-    /// Creates input for the wave function collapse algorithm (overlapping model)
-    /// i.e. patterns and a rule to place them
-    /// </summary>
-    public class Model {
-        public Input input;
-        public PatternStorage patterns;
-        public RuleData rule;
-
-        /// <summary>Original input from a user</summary>
-        public class Input {
-            public Map source;
-            public int N;
-            public Vec2i outputSize;
-        }
-
-        public Model(Map source, int N, Vec2i outputSize) {
-            this.input = new Input() {
+    public static class ModelBuilder {
+        public static Model create(Map source, int N, Vec2i outputSize) {
+            var input = new Model.Input() {
                 source = source,
                 N = N,
                 outputSize = outputSize,
             };
-            var size = input.outputSize;
-            this.patterns = RuleData.extractPatterns(input.source, input.N);
-            this.rule = Model.buildRule(this.patterns, source);
-        }
+            var patterns = RuleData.extractPatterns(input.source, input.N);
+            var rule = ModelBuilder.buildRule(patterns, source);
 
-        /// <summary>If the output is not periodic, filter out positions outside of the output area</summary>
-        public bool filterPos(int x, int y) {
-            var size = this.input.outputSize;
-            return x < 0 || x >= size.x || y < 0 || y >= size.y;
+            return new Model(input, patterns, rule);
         }
 
         /// <summary>Creates an <c>AdjacencyRule</c> for the overlapping model</summary>
@@ -48,7 +28,7 @@ namespace Wfc.Overlap {
                 for (int to = from; to < nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
                         var dir = (Dir4) d;
-                        bool canOverlap = Model.testCompatibility(from, dir, to, patterns, source);
+                        bool canOverlap = ModelBuilder.testCompatibility(from, dir, to, patterns, source);
                         rule.cache.add(canOverlap);
                     }
                 }

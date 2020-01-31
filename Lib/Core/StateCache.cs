@@ -1,6 +1,6 @@
 using System;
 
-namespace Wfc.Overlap {
+namespace Wfc {
     /// <summary>Heap of cells used to pick up one with least entropy</summary>
     /// <remark>Add some noise to make random choices</remark>
     public struct CellHeap {
