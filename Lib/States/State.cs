@@ -8,10 +8,10 @@ namespace Wfc.Overlap {
         public RectArray<EntropyCacheForCell> entropies;
 
         /// <summary>Just for utility</summary>
-        public Vec2 outputSize;
+        public Vec2i outputSize;
 
         public State(int width, int height, PatternStorage patterns, ref Rule rule) {
-            this.outputSize = new Vec2(width, height);
+            this.outputSize = new Vec2i(width, height);
             int nPatterns = patterns.len;
             this.possibilities = new CuboidArray<bool>(width, height, nPatterns);
             this.enablerCounts = EnablerCounter.initial(width, height, patterns, ref rule);
@@ -82,7 +82,7 @@ namespace Wfc.Overlap {
                 var pattern = patterns[((PatternId) patternId).asIndex];
 
                 // left-up corner of the pattern is used for the output
-                var sourcePos = pattern.localPosToSourcePos(new Vec2(0, 0), N);
+                var sourcePos = pattern.localPosToSourcePos(new Vec2i(0, 0), N);
                 var tile = source[sourcePos.x, sourcePos.y];
                 map.tiles.add(tile);
             }
@@ -93,7 +93,7 @@ namespace Wfc.Overlap {
             return map;
         }
 
-        public void printAvaiablePatternCounts(Vec2 outputSize, int nPatterns) {
+        public void printAvaiablePatternCounts(Vec2i outputSize, int nPatterns) {
             for (int y = 0; y < outputSize.y; y++) {
                 for (int x = 0; x < outputSize.x; x++) {
 

@@ -13,10 +13,10 @@ namespace Wfc.Overlap {
         public class Input {
             public Map source;
             public int N;
-            public Vec2 outputSize;
+            public Vec2i outputSize;
         }
 
-        public Model(Map source, int N, Vec2 outputSize) {
+        public Model(Map source, int N, Vec2i outputSize) {
             this.input = new Input() {
                 source = source,
                 N = N,
@@ -61,7 +61,7 @@ namespace Wfc.Overlap {
         int nRemainingCells;
         Propagator propagator;
 
-        public Observer(Vec2 outputSize, State state) {
+        public Observer(Vec2i outputSize, State state) {
             this.heap = new CellHeap(outputSize.area);
             this.nRemainingCells = outputSize.area;
             this.propagator = new Propagator();
@@ -98,13 +98,13 @@ namespace Wfc.Overlap {
 
         /// <summary>Returns (pos, isOnContradiction)</summary>
         /// <remark>The intent is to minimize the risk of contradiction</summary>
-        static(Vec2, bool) selectNextCellToDecide(ref CellHeap heap, State state) {
+        static(Vec2i, bool) selectNextCellToDecide(ref CellHeap heap, State state) {
             while (heap.hasAnyElement()) {
                 var cell = heap.pop();
                 if (state.entropies[cell.x, cell.y].isDecided) continue;
-                return (new Vec2(cell.x, cell.y), false);
+                return (new Vec2i(cell.x, cell.y), false);
             }
-            return (new Vec2(-1, -1), true); // contradicted
+            return (new Vec2i(-1, -1), true); // contradicted
         }
 
         /// <summary>Choose a possible pattern for an unlocked cell randomly in respect of weights of patterns</summary>
@@ -150,11 +150,11 @@ namespace Wfc.Overlap {
         }
 
         struct TileRemoval {
-            public Vec2 pos;
+            public Vec2i pos;
             public PatternId id;
 
             public TileRemoval(int x, int y, PatternId id) {
-                this.pos = new Vec2(x, y);
+                this.pos = new Vec2i(x, y);
                 this.id = id;
             }
         }
@@ -174,13 +174,13 @@ namespace Wfc.Overlap {
             return false;
         }
 
-        static Vec2[] dirVecs = new [] {
+        static Vec2i[] dirVecs = new [] {
             // N, E, S, W
-            new Vec2(0, -1), new Vec2(1, 0), new Vec2(0, 1), new Vec2(-1, 0)
+            new Vec2i(0, -1), new Vec2i(1, 0), new Vec2i(0, 1), new Vec2i(-1, 0)
         };
 
         struct Neighbor {
-            public Vec2 pos;
+            public Vec2i pos;
             public PatternId id;
         }
 

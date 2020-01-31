@@ -8,7 +8,7 @@ namespace Wfc.Overlap {
         public readonly State state;
         public readonly System.Random random = new System.Random();
 
-        public WfcContext(Map source, int N, Vec2 outputSize) {
+        public WfcContext(Map source, int N, Vec2i outputSize) {
             Debug.Assert(N >= 2, $"each pattern must be greater than or equal to 2x2 (N = {N})");
             this.model = new Model(source, N, outputSize);
             this.state = new State(outputSize.x, outputSize.y, this.model.patterns, ref this.model.rule);

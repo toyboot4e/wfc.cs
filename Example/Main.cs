@@ -8,7 +8,7 @@ namespace Wfc.Example {
 
         static void Main(string[] args) {
             var sourceMap = getSource(); // hard coded!
-            var outputSize = new Vec2(36, 36);
+            var outputSize = new Vec2i(36, 36);
 
             WfcContext cx = new WfcContext(sourceMap, 3, outputSize);
             debugPrintInput(cx);
@@ -31,7 +31,7 @@ namespace Wfc.Example {
         static string nl => System.Environment.NewLine;
 
         static Map getSource() {
-            var path = loadAsciiMap("Example/Res/rooms.txt", inputSize : new Vec2(16, 16));
+            var path = loadAsciiMap("Example/Res/rooms.txt", inputSize : new Vec2i(16, 16));
             return path;
             // var sourceMap = loadAsciiMap("Example/Res/a.txt", new Vec2(6, 6));
             // var sourceMap = loadAsciiMap("Example/Res/c.txt", new Vec2(7, 7));
@@ -41,7 +41,7 @@ namespace Wfc.Example {
             // var sourceMap = loadAsciiMap("Example/Res/test.txt", new Vec2(6, 6));
         }
 
-        static Map loadAsciiMap(string path, Vec2 inputSize) {
+        static Map loadAsciiMap(string path, Vec2i inputSize) {
             string asciiMap = File.ReadAllText(path);
             return MapExt.fromString(asciiMap, inputSize.x, inputSize.y);
         }

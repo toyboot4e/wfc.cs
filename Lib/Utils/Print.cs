@@ -71,7 +71,7 @@ namespace Wfc {
         public static void print(this Pattern self, Map source, int N) {
             for (int j = 0; j < N; j++) {
                 for (int i = 0; i < N; i++) {
-                    var pos = self.offset + self.variant.apply(new Vec2(i, j), N);
+                    var pos = self.offset + self.variant.apply(new Vec2i(i, j), N);
                     Console.Write(source[pos.x, pos.y].toChar());
                 }
                 Console.WriteLine();

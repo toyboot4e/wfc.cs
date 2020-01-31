@@ -52,8 +52,8 @@ namespace Wfc.Overlap {
                 for (int col = 0; col < N; col++) {
                     // consider `from` is down and `to` is up (direction = North)
                     // get local positions in each pattern
-                    var downLocal = new Vec2(col, row);
-                    var upLocal = new Vec2(col, row + 1);
+                    var downLocal = new Vec2i(col, row);
+                    var upLocal = new Vec2i(col, row + 1);
                     // apply the direction
                     downLocal = dir.applyAsRotation(downLocal, N);
                     upLocal = dir.applyAsRotation(upLocal, N);

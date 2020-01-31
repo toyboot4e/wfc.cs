@@ -8,7 +8,7 @@ namespace Wfc.Overlap {
     }
 
     public static class OverlapDirectionExt {
-        public static Vec2 applyAsRotation(this OverlappingDirection self, Vec2 v, int N) {
+        public static Vec2i applyAsRotation(this OverlappingDirection self, Vec2i v, int N) {
             return PatternVariantionExt.applyInt((int) self, v, N);
         }
 
