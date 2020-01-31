@@ -12,7 +12,7 @@ namespace Wfc {
 
     /// <summary>Grid/cells of tiles</sumary>
     public class Map {
-        public RectArray<Tile> tiles;
+        public Grid2D<Tile> tiles;
         public int width;
         public int height;
 
@@ -21,7 +21,7 @@ namespace Wfc {
         public Map(int w, int h) {
             this.width = w;
             this.height = h;
-            this.tiles = new RectArray<Tile>(w, h);
+            this.tiles = new Grid2D<Tile>(w, h);
         }
 
         public static Map withItems(int w, int h) {

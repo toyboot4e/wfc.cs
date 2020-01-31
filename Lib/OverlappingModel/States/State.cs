@@ -4,18 +4,18 @@ namespace Wfc.Overlap {
     /// <remark>Wave. Grid of states and caches for each cell</remark>
     public class State {
         public EnablerCounter enablerCounts;
-        CuboidArray<bool> possibilities;
-        public RectArray<EntropyCacheForCell> entropies;
+        Grid3D<bool> possibilities;
+        public Grid2D<EntropyCacheForCell> entropies;
 
         /// <summary>Just for utility</summary>
-        public Vec2 outputSize;
+        public Vec2i outputSize;
 
-        public State(int width, int height, PatternStorage patterns, ref AdjacencyRule rule) {
-            this.outputSize = new Vec2(width, height);
+        public State(int width, int height, PatternStorage patterns, ref RuleData rule) {
+            this.outputSize = new Vec2i(width, height);
             int nPatterns = patterns.len;
-            this.possibilities = new CuboidArray<bool>(width, height, nPatterns);
+            this.possibilities = new Grid3D<bool>(width, height, nPatterns);
             this.enablerCounts = EnablerCounter.initial(width, height, patterns, ref rule);
-            this.entropies = new RectArray<EntropyCacheForCell>(width, height);
+            this.entropies = new Grid2D<EntropyCacheForCell>(width, height);
 
             var initialEntropyCache = EntropyCacheForCell.initial(patterns);
             for (int i = 0; i < width * height; i++) {
@@ -82,7 +82,7 @@ namespace Wfc.Overlap {
                 var pattern = patterns[((PatternId) patternId).asIndex];
 
                 // left-up corner of the pattern is used for the output
-                var sourcePos = pattern.localPosToSourcePos(new Vec2(0, 0), N);
+                var sourcePos = pattern.localPosToSourcePos(new Vec2i(0, 0), N);
                 var tile = source[sourcePos.x, sourcePos.y];
                 map.tiles.add(tile);
             }
@@ -93,7 +93,7 @@ namespace Wfc.Overlap {
             return map;
         }
 
-        public void printAvaiablePatternCounts(Vec2 outputSize, int nPatterns) {
+        public void printAvaiablePatternCounts(Vec2i outputSize, int nPatterns) {
             for (int y = 0; y < outputSize.y; y++) {
                 for (int x = 0; x < outputSize.x; x++) {
 

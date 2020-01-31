@@ -3,13 +3,11 @@ using System.Collections.Generic;
 namespace Wfc {
     /// <summary>Properties mapped from coordinates in a square</summary>
     /// <remark><c>add</c> items before using it. Continuous with x index</summary>
-    public struct RectArray<T> {
+    public struct Grid2D<T> {
         public int width;
         public List<T> items;
 
-        /// <summary>Creates an <c>Array2d</c> with capacity w * h. Continuous with z</summary>
-        /// <remark><c>add</c> items before accessing <c>values</c></summary>
-        public RectArray(int w, int h) {
+        public Grid2D(int w, int h) {
             this.width = w;
             this.items = new List<T>(w * h);
         }
@@ -33,16 +31,14 @@ namespace Wfc {
         }
     }
 
-    /// <summary>Properties mapped from coordinates in a cuboid. Continuous with z, then x</summary>
-    /// <remark><c>add</c> items before using it.</summary>
-    public struct CuboidArray<T> {
+    /// <summary>Properties mapped from coordinates in a cuboid</summary>
+    /// <remark><c>add</c> items before using it. Continuous with z, then x</summary>
+    public struct Grid3D<T> {
         public int nx;
         public int nz;
         public List<T> items;
 
-        /// <summary>Creates an <c>Array2d</c> with capacity (nx * ny * nz)</summary>
-        /// <remark><c>add</c> items before accessing <c>values</c></summary>
-        public CuboidArray(int nx, int ny, int nz) {
+        public Grid3D(int nx, int ny, int nz) {
             this.nx = nx;
             this.nz = nz;
             this.items = new List<T>(nx * ny * nz);

@@ -1,59 +1,7 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Wfc.Overlap {
-    /// <summary>
-    /// Creates input for the wave function collapse algorithm (overlapping model)
-    /// </summary>
-    public class Model {
-        public Input input;
-        public PatternStorage patterns;
-        public AdjacencyRule rule;
-
-        /// <summary>Original input from a user</summary>
-        public class Input {
-            public Map source;
-            public int N;
-            public Vec2 outputSize;
-        }
-
-        public Model(Map source, int N, Vec2 outputSize) {
-            this.input = new Input() {
-                source = source,
-                N = N,
-                outputSize = outputSize,
-            };
-            var size = input.outputSize;
-            this.patterns = Model.extractPatterns(input.source, input.N);
-            this.rule = new AdjacencyRule(this.patterns, input.source);
-        }
-
-        /// <summary>If the output is not periodic, filter out positions outside of the output area</summary>
-        public bool filterPos(int x, int y) {
-            var size = this.input.outputSize;
-            return x < 0 || x >= size.x || y < 0 || y >= size.y;
-        }
-
-        /// <summary>
-        /// Extracts every NxN pattern in the <c>source</c> map considering their variants (rotations and flippings)
-        /// </summary>
-        static PatternStorage extractPatterns(Map source, int N) {
-            var patterns = new PatternStorage(source, N);
-            var variations = PatternUtil.variations; // TODO: use fixed or stackalloc
-            var nVariations = variations.Length;
-
-            // TODO: handling periodic input
-            for (int y = 0; y < source.height - N + 1; y++) {
-                for (int x = 0; x < source.width - N + 1; x++) {
-                    for (int i = 0; i < nVariations; i++) {
-                        patterns.store(x, y, variations[i]);
-                    }
-                }
-            }
-
-            return patterns;
-        }
-    }
-
     /// <summary>Advances the state of WFC</summary>
     public class Observer {
         /// <summary>Used to pick up cell with least entropy</summary>
@@ -61,7 +9,7 @@ namespace Wfc.Overlap {
         int nRemainingCells;
         Propagator propagator;
 
-        public Observer(Vec2 outputSize, State state) {
+        public Observer(Vec2i outputSize, State state) {
             this.heap = new CellHeap(outputSize.area);
             this.nRemainingCells = outputSize.area;
             this.propagator = new Propagator();
@@ -98,13 +46,13 @@ namespace Wfc.Overlap {
 
         /// <summary>Returns (pos, isOnContradiction)</summary>
         /// <remark>The intent is to minimize the risk of contradiction</summary>
-        static(Vec2, bool) selectNextCellToDecide(ref CellHeap heap, State state) {
+        static(Vec2i, bool) selectNextCellToDecide(ref CellHeap heap, State state) {
             while (heap.hasAnyElement()) {
                 var cell = heap.pop();
                 if (state.entropies[cell.x, cell.y].isDecided) continue;
-                return (new Vec2(cell.x, cell.y), false);
+                return (new Vec2i(cell.x, cell.y), false);
             }
-            return (new Vec2(-1, -1), true); // contradicted
+            return (new Vec2i(-1, -1), true); // contradicted
         }
 
         /// <summary>Choose a possible pattern for an unlocked cell randomly in respect of weights of patterns</summary>
@@ -150,11 +98,11 @@ namespace Wfc.Overlap {
         }
 
         struct TileRemoval {
-            public Vec2 pos;
+            public Vec2i pos;
             public PatternId id;
 
             public TileRemoval(int x, int y, PatternId id) {
-                this.pos = new Vec2(x, y);
+                this.pos = new Vec2i(x, y);
                 this.id = id;
             }
         }
@@ -174,13 +122,13 @@ namespace Wfc.Overlap {
             return false;
         }
 
-        static Vec2[] dirVecs = new [] {
+        static Vec2i[] dirVecs = new [] {
             // N, E, S, W
-            new Vec2(0, -1), new Vec2(1, 0), new Vec2(0, 1), new Vec2(-1, 0)
+            new Vec2i(0, -1), new Vec2i(1, 0), new Vec2i(0, 1), new Vec2i(-1, 0)
         };
 
         struct Neighbor {
-            public Vec2 pos;
+            public Vec2i pos;
             public PatternId id;
         }
 
@@ -198,12 +146,12 @@ namespace Wfc.Overlap {
                 nb.pos += outputSize;
                 nb.pos %= outputSize;
 
-                var dirFromNeighbor = ((OverlappingDirection) dirIndex).opposite();
+                var dirFromNeighbor = ((Dir4) dirIndex).opposite();
                 for (int i = 0; i < nPatterns; i++) {
                     nb.id = new PatternId(i);
 
                     // skip some combinations (not an enabler or already removed)
-                    if (!cx.model.rule.canOverlap(nb.id, dirFromNeighbor, removal.id)) continue;
+                    if (!cx.model.rule.isLegal(nb.id, dirFromNeighbor, removal.id)) continue;
                     if (!cx.state.isPossible(nb.pos.x, nb.pos.y, nb.id)) continue;
 
                     // decrement the enabler count for the compatible pattern

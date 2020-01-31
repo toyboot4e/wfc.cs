@@ -9,21 +9,21 @@ namespace Wfc {
     /// This implementation is like a slice, but <c>Pattern</c> can also be implemented as an array. Which is better?
     /// </remark>
     public class Pattern {
-        public readonly Vec2 offset;
+        public readonly Vec2i offset;
         public readonly PatternVariation variant;
         /// <summary>Frequency. The number of times it appears in a source <c>Map</c></summary>
         public int weight;
 
         public void incWeight() => this.weight += 1;
 
-        public Pattern(Vec2 offset, PatternVariation variant) {
+        public Pattern(Vec2i offset, PatternVariation variant) {
             this.offset = offset;
             this.weight = 1;
             this.variant = variant;
         }
 
         public Tile tileAt(int x, int y, int N, Map source) {
-            var pos = this.offset + this.variant.apply(new Vec2(x, y), N);
+            var pos = this.offset + this.variant.apply(new Vec2i(x, y), N);
             return source[pos.x, pos.y];
         }
     }
@@ -56,7 +56,7 @@ namespace Wfc {
 
         /// <summary>Stores an extracted pattern considering duplicates</summary>
         public void store(int x, int y, PatternVariation v) {
-            var offset = new Vec2(x, y);
+            var offset = new Vec2i(x, y);
             var newPattern = new Pattern(offset, v);
 
             for (int i = 0; i < this.buffer.Count; i++) {

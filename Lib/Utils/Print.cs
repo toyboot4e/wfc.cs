@@ -71,7 +71,7 @@ namespace Wfc {
         public static void print(this Pattern self, Map source, int N) {
             for (int j = 0; j < N; j++) {
                 for (int i = 0; i < N; i++) {
-                    var pos = self.offset + self.variant.apply(new Vec2(i, j), N);
+                    var pos = self.offset + self.variant.apply(new Vec2i(i, j), N);
                     Console.Write(source[pos.x, pos.y].toChar());
                 }
                 Console.WriteLine();
@@ -94,12 +94,12 @@ namespace Wfc {
     }
 
     public static class AdjacencyRuleExt {
-        public static void print(this AdjacencyRule self, int nPatterns) {
+        public static void print(this RuleData self, int nPatterns) {
             for (int from = 0; from < self.nPatterns; from++) {
                 for (int to = from; to < self.nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
-                        if (!self.canOverlap(new PatternId(from), (OverlappingDirection) d, new PatternId(to))) continue;
-                        Console.WriteLine($"legal: {from} to {to} in {(OverlappingDirection) d}");
+                        if (!self.isLegal(new PatternId(from), (Dir4) d, new PatternId(to))) continue;
+                        Console.WriteLine($"legal: {from} to {to} in {(Dir4) d}");
                     }
                 }
             }
