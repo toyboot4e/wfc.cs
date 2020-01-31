@@ -11,7 +11,7 @@ namespace Wfc {
                 throw new System.ArgumentException($"given N = {N}; it must be bigger than one");
             }
 
-            var model = Wfc.Overlap.ModelBuilder.create(ref source, 3, outputSize);
+            var model = OverlappingModel.create(ref source, 3, outputSize);
             var state = new State(outputSize.x, outputSize.y, model.patterns, ref model.rule);
             return new WfcOverlap(model, state, N);
         }
@@ -22,11 +22,11 @@ namespace Wfc {
 
         public Map getOutput(ref Map source) {
             int nPatterns = this.model.patterns.len;
-            var gridSize = this.model.gridSize;
-            var output = new Map(gridSize.x, gridSize.y);
-            for (int i = 0; i < gridSize.area; i++) {
-                int x = i % gridSize.x;
-                int y = i / gridSize.y;
+            var outputSize = this.model.gridSize;
+            var output = new Map(outputSize.x, outputSize.y);
+            for (int i = 0; i < outputSize.area; i++) {
+                int x = i % outputSize.x;
+                int y = i / outputSize.y;
                 var patternId = this.state.patternIdAt(x, y, nPatterns);
                 if (patternId == null) {
                     output.tiles.add(Tile.None);
@@ -54,7 +54,7 @@ namespace Wfc {
                 throw new System.ArgumentException($"given N = {N}; it must be bigger than one");
             }
 
-            var model = Wfc.Overlap.ModelBuilder.create(ref source, 3, outputSize);
+            var model = AdjacencyModel.create(ref source, 3, outputSize);
             var gridSize = outputSize / N;
             var state = new State(gridSize.x, gridSize.y, model.patterns, ref model.rule);
             return new WfcAdjacency(model, state, N);

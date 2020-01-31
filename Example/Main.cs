@@ -10,19 +10,21 @@ namespace Wfc.Example {
             var source = getSourceMap(); // hard coded!
             var outputSize = new Vec2i(36, 36);
 
-            var cx = WfcAdjacency.create(ref source, 3, outputSize);
-            debugPrintInput(cx, ref source);
+            var wfc = WfcAdjacency.create(ref source, 3, outputSize);
+            // var wfc = WfcOverlap.create(ref source, 3, outputSize);
+            debugPrintInput(wfc, ref source);
 
-            while (!cx.run()) {
-                cx = WfcAdjacency.create(ref source, 3, outputSize);
+            while (!wfc.run()) {
+                wfc = WfcAdjacency.create(ref source, 3, outputSize);
+                // wfc = WfcOverlap.create(ref source, 3, outputSize);
             }
 
-            var output = cx.getOutput(ref source);
+            var output = wfc.getOutput(ref source);
             debugPrintOutput(ref output);
 
             // make sure the output is fine
-            Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
-            Test.testEveryColumn(cx.state, ref cx.model.rule, cx.model.patterns);
+            Test.testEveryRow(wfc.state, ref wfc.model.rule, wfc.model.patterns);
+            Test.testEveryColumn(wfc.state, ref wfc.model.rule, wfc.model.patterns);
         }
 
         static string nl => System.Environment.NewLine;
@@ -63,7 +65,7 @@ namespace Wfc.Example {
         }
 
         static void debugPrintOutput(ref Map output) {
-            Console.WriteLine("=== Output: ===");
+            Console.WriteLine($"=== Output ({output.width}x{output.height}) ===");
             output.print();
             Console.WriteLine("");
             Console.WriteLine("=== Output in a circle: ===");

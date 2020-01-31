@@ -1,13 +1,12 @@
-namespace Wfc.Overlap {
-    public static class ModelBuilder {
+namespace Wfc {
+    public static class OverlappingModel {
         public static Model create(ref Map source, int N, Vec2i outputSize) {
             if (outputSize.x % N != 0 || outputSize.y % N != 0) {
                 throw new System.Exception($"output size {outputSize} is indivisible by N={N}");
             }
-            var gridSize = outputSize / N;
             var patterns = RuleData.extractPatterns(ref source, N);
-            var rule = ModelBuilder.buildRule(patterns, ref source);
-            return new Model(gridSize, patterns, rule);
+            var rule = OverlappingModel.buildRule(patterns, ref source);
+            return new Model(outputSize, patterns, rule);
         }
 
         /// <summary>Creates an <c>AdjacencyRule</c> for the overlapping model</summary>
@@ -26,7 +25,7 @@ namespace Wfc.Overlap {
                 for (int to = from; to < nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
                         var dir = (Dir4) d;
-                        bool canOverlap = ModelBuilder.testCompatibility(from, dir, to, patterns, source);
+                        bool canOverlap = OverlappingModel.testCompatibility(from, dir, to, patterns, source);
                         rule.cache.add(canOverlap);
                     }
                 }
