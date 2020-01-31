@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Wfc.Overlap {
+namespace Wfc {
     /// <summary>Advances the state of WFC</summary>
     public class Observer : iObserver {
         /// <summary>Used to pick up cell with least entropy</summary>
@@ -8,14 +8,14 @@ namespace Wfc.Overlap {
         int nRemainingCells;
         Propagator propagator;
 
-        public Observer(Vec2i outputSize, State state) {
-            this.heap = new CellHeap(outputSize.area);
-            this.nRemainingCells = outputSize.area;
+        public Observer(Vec2i gridSize, State state) {
+            this.heap = new CellHeap(gridSize.area);
+            this.nRemainingCells = gridSize.area;
             this.propagator = new Propagator();
 
             // make all the cells pickable
-            for (int y = 0; y < outputSize.y; y++) {
-                for (int x = 0; x < outputSize.x; x++) {
+            for (int y = 0; y < gridSize.y; y++) {
+                for (int x = 0; x < gridSize.x; x++) {
                     this.heap.add(x, y, state.entropies[x, y].entropyWithNoise());
                 }
             }
@@ -134,7 +134,7 @@ namespace Wfc.Overlap {
         /// <summary>Reduces enabler counts around the cell. True if contradicted</summary>
         bool propagateRemoval(TileRemoval removal, WfcContext cx, Observer observer) {
             int nPatterns = cx.model.patterns.len;
-            var outputSize = cx.model.outputSize;
+            var gridSize = cx.model.gridSize;
 
             var nb = new Neighbor { };
             for (int dirIndex = 0; dirIndex < 4; dirIndex++) {
@@ -142,8 +142,8 @@ namespace Wfc.Overlap {
                 if (cx.model.filterPos(nb.pos.x, nb.pos.y)) continue;
 
                 // for periodic output
-                nb.pos += outputSize;
-                nb.pos %= outputSize;
+                nb.pos += gridSize;
+                nb.pos %= gridSize;
 
                 var dirFromNeighbor = ((Dir4) dirIndex).opposite();
                 for (int i = 0; i < nPatterns; i++) {

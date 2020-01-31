@@ -43,20 +43,20 @@ namespace Wfc {
     /// <summary>Input to the core algorithm of WFC</summary>
     public class Model {
         // public Input input;
-        public Vec2i outputSize;
+        public Vec2i gridSize;
         public PatternStorage patterns;
         public RuleData rule;
 
-        public Model(Vec2i outputSize, PatternStorage patterns, RuleData rule) {
+        public Model(Vec2i gridSize, PatternStorage patterns, RuleData rule) {
             // this.input = input;
-            this.outputSize = outputSize;
+            this.gridSize = gridSize;
             this.patterns = patterns;
             this.rule = rule;
         }
 
         /// <summary>If the output is not periodic, filter out positions outside of the output area</summary>
         public bool filterPos(int x, int y) {
-            var size = this.outputSize;
+            var size = this.gridSize;
             return x < 0 || x >= size.x || y < 0 || y >= size.y;
         }
     }

@@ -37,6 +37,11 @@ namespace Wfc {
             set => this.tiles[x, y] = value;
         }
 
+        public Tile this[Vec2i v] {
+            get => this.tiles[v.x, v.y];
+            set => this.tiles[v.x, v.y] = value;
+        }
+
         public void add(Tile tile) {
             this.tiles.add(tile);
         }

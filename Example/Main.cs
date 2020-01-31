@@ -7,21 +7,18 @@ namespace Wfc.Example {
         private const string Path = "Example/Res/T.txt";
 
         static void Main(string[] args) {
-            var sourceMap = getSource(); // hard coded!
+            var source = getSourceMap(); // hard coded!
             var outputSize = new Vec2i(36, 36);
 
-            var cx = WfcOverlap.create(ref sourceMap, 3, outputSize);
-            debugPrintInput(cx, ref sourceMap);
+            var cx = WfcAdjacency.create(ref source, 3, outputSize);
+            debugPrintInput(cx, ref source);
 
-            // run until succeed
             while (!cx.run()) {
-                // reset and restart
-                cx = WfcOverlap.create(ref sourceMap, 3, outputSize);
+                cx = WfcAdjacency.create(ref source, 3, outputSize);
             }
 
-            var output = cx.getOutput(ref sourceMap);
+            var output = cx.getOutput(ref source);
             debugPrintOutput(ref output);
-            Wfc.Segments.Circle.print(ref output);
 
             // make sure the output is fine
             Test.testEveryRow(cx.state, ref cx.model.rule, cx.model.patterns);
@@ -30,7 +27,7 @@ namespace Wfc.Example {
 
         static string nl => System.Environment.NewLine;
 
-        static Map getSource() {
+        static Map getSourceMap() {
             var path = loadAsciiMap("Example/Res/rooms.txt", inputSize : new Vec2i(16, 16));
             return path;
             // var sourceMap = loadAsciiMap("Example/Res/a.txt", new Vec2(6, 6));
@@ -68,6 +65,10 @@ namespace Wfc.Example {
         static void debugPrintOutput(ref Map output) {
             Console.WriteLine("=== Output: ===");
             output.print();
+            Console.WriteLine("");
+            Console.WriteLine("=== Output in a circle: ===");
+            Wfc.Segments.Circle.print(ref output);
+            Console.WriteLine("");
         }
     }
 }

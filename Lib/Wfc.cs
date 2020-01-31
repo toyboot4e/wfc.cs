@@ -7,37 +7,96 @@ namespace Wfc {
         }
 
         public static WfcOverlap create(ref Map source, int N, Vec2i outputSize) {
+            if (N < 2) {
+                throw new System.ArgumentException($"given N = {N}; it must be bigger than one");
+            }
+
             var model = Wfc.Overlap.ModelBuilder.create(ref source, 3, outputSize);
             var state = new State(outputSize.x, outputSize.y, model.patterns, ref model.rule);
             return new WfcOverlap(model, state, N);
         }
 
         public bool run() {
-            return this.run(new Wfc.Overlap.Observer(this.model.outputSize, this.state));
+            return this.run(new Wfc.Observer(this.model.gridSize, this.state));
         }
 
         public Map getOutput(ref Map source) {
-            return this.state.getOutput(
-                this.model.outputSize.x,
-                this.model.outputSize.y,
-                ref source,
-                N,
-                this.model.patterns
-            );
+            int nPatterns = this.model.patterns.len;
+            var gridSize = this.model.gridSize;
+            var output = new Map(gridSize.x, gridSize.y);
+            for (int i = 0; i < gridSize.area; i++) {
+                int x = i % gridSize.x;
+                int y = i / gridSize.y;
+                var patternId = this.state.patternIdAt(x, y, nPatterns);
+                if (patternId == null) {
+                    output.tiles.add(Tile.None);
+                } else {
+                    var pattern = this.model.patterns[((PatternId) patternId).asIndex];
+                    // tile at theleft-up corner of the pattern is used for the output
+                    var sourcePos = pattern.localPosToSourcePos(new Vec2i(0, 0), N);
+                    var tile = source[sourcePos.x, sourcePos.y];
+                    output.tiles.add(tile);
+                }
+            }
+            return output;
         }
     }
 
-    // public class WfcAdjacent : WfcContext {
-    //     public WfcAdjacent(Model model, State state) : base(model, state) { }
+    public class WfcAdjacency : WfcContext {
+        int N;
 
-    //     public static WfcOverlap create(Map source, int N, Vec2i outputSize) {
-    //         var model = Wfc.Overlap.ModelBuilder.create(source, 3, outputSize);
-    //         var state = new State(outputSize.x / N, outputSize.y / N, model.patterns, ref model.rule);
-    //         return new WfcOverlap(model, state);
-    //     }
+        WfcAdjacency(Model model, State state, int N) : base(model, state) {
+            this.N = N;
+        }
 
-    //     public bool run() {
-    //         return this.run(new Wfc.Adjacent.Observer(this.model.input.outputSize, this.state));
-    //     }
-    // }
+        public static WfcAdjacency create(ref Map source, int N, Vec2i outputSize) {
+            if (N < 2) {
+                throw new System.ArgumentException($"given N = {N}; it must be bigger than one");
+            }
+
+            var model = Wfc.Overlap.ModelBuilder.create(ref source, 3, outputSize);
+            var gridSize = outputSize / N;
+            var state = new State(gridSize.x, gridSize.y, model.patterns, ref model.rule);
+            return new WfcAdjacency(model, state, N);
+        }
+
+        public bool run() {
+            return this.run(new Wfc.Observer(this.model.gridSize, this.state));
+        }
+
+        public Map getOutput(ref Map source) {
+            int nPatterns = this.model.patterns.len;
+            var N = this.N;
+
+            var gridSize = this.model.gridSize;
+            var outputSize = gridSize * N;
+
+            var output = new Map(outputSize.x, outputSize.y);
+            for (int i = 0; i < outputSize.area; i++) {
+                output.tiles.add(Tile.None);
+            }
+
+            for (int i = 0; i < gridSize.area; i++) {
+                int gridX = i % gridSize.x;
+                int gridY = i / gridSize.y;
+                var patternId = this.state.patternIdAt(gridX, gridY, nPatterns);
+
+                if (patternId == null) {
+                    continue;
+                }
+
+                var pattern = this.model.patterns[((PatternId) patternId).asIndex];
+                for (int iy = 0; iy < N; iy++) {
+                    for (int ix = 0; ix < N; ix++) {
+                        var sourcePos = pattern.localPosToSourcePos(new Vec2i(ix, iy), N);
+                        var tile = source[sourcePos.x, sourcePos.y];
+                        var outputPos = N * new Vec2i(gridX, gridY) + new Vec2i(ix, iy);
+                        output[outputPos] = tile;
+                    }
+                }
+            }
+
+            return output;
+        }
+    }
 }

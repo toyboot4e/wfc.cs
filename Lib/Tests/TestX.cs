@@ -2,8 +2,10 @@ namespace Wfc.Overlap {
     public class Test {
         public static void testEveryRow(State state, ref RuleData rule, PatternStorage patterns) {
             System.Console.WriteLine($"=== Test every row ===");
-            int h = state.outputSize.y;
-            int w = state.outputSize.x;
+            var gridSize = state.gridSize;
+
+            int h = gridSize.y;
+            int w = gridSize.x;
             int n = patterns.len;
             for (int y = 0; y < h; y++) {
                 for (int x = 0; x < w - 1; x++) {
@@ -19,8 +21,10 @@ namespace Wfc.Overlap {
 
         public static void testEveryColumn(State state, ref RuleData rule, PatternStorage patterns) {
             System.Console.WriteLine($"=== Test every column ===");
-            int h = state.outputSize.y;
-            int w = state.outputSize.x;
+            var gridSize = state.gridSize;
+
+            int h = gridSize.y;
+            int w = gridSize.x;
             int n = patterns.len;
             for (int x = 0; x < w; x++) {
                 for (int y = 0; y < h - 1; y++) {
