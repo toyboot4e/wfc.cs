@@ -3,7 +3,7 @@ namespace Wfc.Overlap {
     /// <remark>
     /// The local similarity constraint is achieved by just ensuring adjacent overlapping patterns are legal
     /// </remark>
-    public struct AdjacencyRule {
+    public struct Rule {
         RectArray<bool> cache; // continuous in direction, toPattern, then fromPattern
         public int nPatterns;
 
@@ -22,7 +22,7 @@ namespace Wfc.Overlap {
         }
 
         /// <summary>Creates an <c>AdjacencyRule</c> for the overlapping model</summary>
-        public AdjacencyRule(PatternStorage patterns, Map source) {
+        public Rule(PatternStorage patterns, Map source) {
             int nPatterns = patterns.len;
             this.nPatterns = nPatterns;
 
@@ -35,7 +35,7 @@ namespace Wfc.Overlap {
                 for (int to = from; to < nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {
                         var dir = (OverlappingDirection) d;
-                        bool canOverlap = AdjacencyRule.testCompatibility(from, dir, to, patterns, source);
+                        bool canOverlap = Rule.testCompatibility(from, dir, to, patterns, source);
                         this.cache.add(canOverlap);
                     }
                 }

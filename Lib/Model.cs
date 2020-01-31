@@ -7,7 +7,7 @@ namespace Wfc.Overlap {
     public class Model {
         public Input input;
         public PatternStorage patterns;
-        public AdjacencyRule rule;
+        public Rule rule;
 
         /// <summary>Original input from a user</summary>
         public class Input {
@@ -24,7 +24,7 @@ namespace Wfc.Overlap {
             };
             var size = input.outputSize;
             this.patterns = Model.extractPatterns(input.source, input.N);
-            this.rule = new AdjacencyRule(this.patterns, input.source);
+            this.rule = new Rule(this.patterns, input.source);
         }
 
         /// <summary>If the output is not periodic, filter out positions outside of the output area</summary>

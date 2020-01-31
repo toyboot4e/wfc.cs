@@ -94,7 +94,7 @@ namespace Wfc {
     }
 
     public static class AdjacencyRuleExt {
-        public static void print(this AdjacencyRule self, int nPatterns) {
+        public static void print(this Rule self, int nPatterns) {
             for (int from = 0; from < self.nPatterns; from++) {
                 for (int to = from; to < self.nPatterns; to++) {
                     for (int d = 0; d < 4; d++) {

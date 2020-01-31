@@ -1,6 +1,6 @@
 namespace Wfc.Overlap {
     public class Test {
-        public static void testEveryRow(State state, ref AdjacencyRule rule, PatternStorage patterns) {
+        public static void testEveryRow(State state, ref Rule rule, PatternStorage patterns) {
             System.Console.WriteLine($"=== Test every row ===");
             int h = state.outputSize.y;
             int w = state.outputSize.x;
@@ -17,7 +17,7 @@ namespace Wfc.Overlap {
             }
         }
 
-        public static void testEveryColumn(State state, ref AdjacencyRule rule, PatternStorage patterns) {
+        public static void testEveryColumn(State state, ref Rule rule, PatternStorage patterns) {
             System.Console.WriteLine($"=== Test every column ===");
             int h = state.outputSize.y;
             int w = state.outputSize.x;
@@ -34,7 +34,7 @@ namespace Wfc.Overlap {
             }
         }
 
-        public static void printInitialEnableCounter(int width, int height, PatternStorage patterns, ref AdjacencyRule rule) {
+        public static void printInitialEnableCounter(int width, int height, PatternStorage patterns, ref Rule rule) {
             System.Console.WriteLine($"=== Initial enabler count ===");
 
             var counts = EnablerCounter.initial(width, height, patterns, ref rule);

@@ -72,7 +72,7 @@ namespace Wfc.Overlap {
             return false;
         }
 
-        public static EnablerCounter initial(int width, int height, PatternStorage patterns, ref AdjacencyRule rule) {
+        public static EnablerCounter initial(int width, int height, PatternStorage patterns, ref Rule rule) {
             int nPatterns = patterns.len;
             var self = new EnablerCounter(width, height, nPatterns);
 

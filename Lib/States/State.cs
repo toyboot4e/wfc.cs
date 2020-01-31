@@ -10,7 +10,7 @@ namespace Wfc.Overlap {
         /// <summary>Just for utility</summary>
         public Vec2 outputSize;
 
-        public State(int width, int height, PatternStorage patterns, ref AdjacencyRule rule) {
+        public State(int width, int height, PatternStorage patterns, ref Rule rule) {
             this.outputSize = new Vec2(width, height);
             int nPatterns = patterns.len;
             this.possibilities = new CuboidArray<bool>(width, height, nPatterns);
