@@ -44,10 +44,10 @@ namespace Wfc.Overlap {
     // TODO: consider making it a struct (indexer doesn't require copy, does it?)
     /// <summary>(int, int, PatternId, OverlappingDirection) -> int</summary>
     public class EnablerCounter {
-        CuboidArray<int> counts;
+        Grid3D<int> counts;
 
         EnablerCounter(int width, int height, int nPatterns) {
-            this.counts = new CuboidArray<int>(width, height, 4 * nPatterns);
+            this.counts = new Grid3D<int>(width, height, 4 * nPatterns);
         }
 
         public int this[int x, int y, PatternId id, Dir4 dir] {

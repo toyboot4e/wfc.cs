@@ -4,8 +4,8 @@ namespace Wfc.Overlap {
     /// <remark>Wave. Grid of states and caches for each cell</remark>
     public class State {
         public EnablerCounter enablerCounts;
-        CuboidArray<bool> possibilities;
-        public RectArray<EntropyCacheForCell> entropies;
+        Grid3D<bool> possibilities;
+        public Grid2D<EntropyCacheForCell> entropies;
 
         /// <summary>Just for utility</summary>
         public Vec2i outputSize;
@@ -13,9 +13,9 @@ namespace Wfc.Overlap {
         public State(int width, int height, PatternStorage patterns, ref Rule rule) {
             this.outputSize = new Vec2i(width, height);
             int nPatterns = patterns.len;
-            this.possibilities = new CuboidArray<bool>(width, height, nPatterns);
+            this.possibilities = new Grid3D<bool>(width, height, nPatterns);
             this.enablerCounts = EnablerCounter.initial(width, height, patterns, ref rule);
-            this.entropies = new RectArray<EntropyCacheForCell>(width, height);
+            this.entropies = new Grid2D<EntropyCacheForCell>(width, height);
 
             var initialEntropyCache = EntropyCacheForCell.initial(patterns);
             for (int i = 0; i < width * height; i++) {

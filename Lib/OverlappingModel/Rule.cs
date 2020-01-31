@@ -3,7 +3,7 @@ namespace Wfc.Overlap {
     /// Compatibilities of patterns for the overlapping model <c>Rule</c>
     /// </summary>
     public struct Rule {
-        RectArray<bool> cache; // continuous in direction, toPattern, then fromPattern
+        Grid2D<bool> cache; // continuous in direction, toPattern, then fromPattern
         public int nPatterns;
 
         bool this[int from, int dir, int to] {
@@ -27,7 +27,7 @@ namespace Wfc.Overlap {
 
             { // not count symmetric combinations
                 int nOverlappingPatterns = (nPatterns + 1) * (nPatterns) / 2;
-                this.cache = new RectArray<bool>(4, nOverlappingPatterns);
+                this.cache = new Grid2D<bool>(4, nOverlappingPatterns);
             }
 
             for (int from = 0; from < nPatterns; from++) {
