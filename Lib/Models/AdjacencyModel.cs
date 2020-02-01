@@ -5,7 +5,7 @@ namespace Wfc {
                 throw new System.Exception($"output size {outputSize} is indivisible by N={N}");
             }
             var gridSize = outputSize / N;
-            var patterns = RuleData.extractPatterns(ref source, N);
+            var patterns = RuleData.extractEveryPattern(ref source, N);
             var rule = AdjacencyModel.buildRule(patterns, ref source);
             return new Model(gridSize, patterns, rule);
         }

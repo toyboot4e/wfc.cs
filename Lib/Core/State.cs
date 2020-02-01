@@ -3,10 +3,14 @@ using System.Linq;
 namespace Wfc {
     /// <remark>Wave. Grid of states and caches for each cell</remark>
     public class State {
-        public EnablerCounter enablerCounts;
-        Grid3D<bool> possibilities;
-        public Grid2D<EntropyCacheForCell> entropies;
+        /// <summary>Size of the grid the <c>State</c> manages</summary>
         public Vec2i gridSize;
+        /// <summary>Remaning possible patterns per cell</summary>
+        Grid3D<bool> possibilities;
+        /// <summary>Cache of the entropy heuristics</summary>
+        public Grid2D<EntropyCacheForCell> entropies;
+        /// <summary>Cache to propagate compatibility constraints</summary>
+        public EnablerCounter enablerCounts;
 
         public State(int width, int height, PatternStorage patterns, ref RuleData rule) {
             int nPatterns = patterns.len;
@@ -29,7 +33,7 @@ namespace Wfc {
         public bool isPossible(int x, int y, PatternId id) => this.possibilities[x, y, id.asIndex];
 
         /// <summary>Set a flag</summary>
-        public void onLockinPattern(int x, int y, int weight) {
+        public void solveCellWithPattern(int x, int y, int weight) {
             var newCache = this.entropies[x, y];
             newCache.isDecided = true;
             newCache.totalWeight = weight; // update the total weight so that contradiction can be detected on a propagation

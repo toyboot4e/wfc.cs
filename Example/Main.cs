@@ -4,19 +4,18 @@ using Wfc.Overlap;
 
 namespace Wfc.Example {
     class Program {
-        private const string Path = "Example/Res/T.txt";
-
         static void Main(string[] args) {
-            var source = getSourceMap(); // hard coded!
+            var path = "Example/Res/rooms.txt";
+            var source = loadAsciiMap(path);
             var outputSize = new Vec2i(36, 36);
 
-            var wfc = WfcAdjacency.create(ref source, 3, outputSize);
-            // var wfc = WfcOverlap.create(ref source, 3, outputSize);
+            // var wfc = WfcAdjacency.create(ref source, 3, outputSize);
+            var wfc = WfcOverlap.create(ref source, 3, outputSize);
             debugPrintInput(wfc, ref source);
 
             while (!wfc.run()) {
-                wfc = WfcAdjacency.create(ref source, 3, outputSize);
-                // wfc = WfcOverlap.create(ref source, 3, outputSize);
+                // wfc = WfcAdjacency.create(ref source, 3, outputSize);
+                wfc = WfcOverlap.create(ref source, 3, outputSize);
             }
 
             var output = wfc.getOutput(ref source);
@@ -29,20 +28,21 @@ namespace Wfc.Example {
 
         static string nl => System.Environment.NewLine;
 
-        static Map getSourceMap() {
-            var path = loadAsciiMap("Example/Res/rooms.txt", inputSize : new Vec2i(16, 16));
-            return path;
-            // var sourceMap = loadAsciiMap("Example/Res/a.txt", new Vec2(6, 6));
-            // var sourceMap = loadAsciiMap("Example/Res/c.txt", new Vec2(7, 7));
-            // var sourceMap = loadAsciiMap("Example/Res/wide.txt", new Vec2(7, 7));
-            // var sourceMap = loadAsciiMap("Example/Res/rect.txt", new Vec2(9, 9));
-            // var sourceMap = loadAsciiMap("Example/Res/curve.txt", new Vec2(7, 7));
-            // var sourceMap = loadAsciiMap("Example/Res/test.txt", new Vec2(6, 6));
-        }
-
-        static Map loadAsciiMap(string path, Vec2i inputSize) {
+        static Map loadAsciiMap(string path) {
             string asciiMap = File.ReadAllText(path);
-            return MapExt.fromString(asciiMap, inputSize.x, inputSize.y);
+            var width = asciiMap.IndexOf(Environment.NewLine, 0);
+            var height = lineCount(asciiMap);
+            return MapExt.fromString(asciiMap, width, height);
+
+            static int lineCount(string s) {
+                int count = 1;
+                int start = 0;
+                while ((start = s.IndexOf('\n', start)) != -1) {
+                    count++;
+                    start++;
+                }
+                return count;
+            }
         }
 
         static void debugPrintInput(WfcContext cx, ref Map source) {

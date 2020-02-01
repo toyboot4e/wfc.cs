@@ -17,7 +17,7 @@ namespace Wfc {
         }
 
         public bool run() {
-            return this.run(new Wfc.Observer(this.model.gridSize, this.state));
+            return this.run(new Wfc.Solver(this.model.gridSize, this.state));
         }
 
         public Map getOutput(ref Map source) {
@@ -61,7 +61,7 @@ namespace Wfc {
         }
 
         public bool run() {
-            return this.run(new Wfc.Observer(this.model.gridSize, this.state));
+            return this.run(new Wfc.Solver(this.model.gridSize, this.state));
         }
 
         public Map getOutput(ref Map source) {

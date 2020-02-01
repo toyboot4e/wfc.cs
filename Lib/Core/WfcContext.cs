@@ -19,9 +19,9 @@ namespace Wfc {
             Fail,
         }
 
-        public bool run<T>(T observer) where T : iObserver {
+        public bool run<T>(T solver) where T : iSolver {
             while (true) {
-                switch (observer.advance(this)) {
+                switch (solver.advance(this)) {
                     case AdvanceStatus.Continue:
                         continue;
                     case AdvanceStatus.Success:
@@ -36,7 +36,7 @@ namespace Wfc {
         }
     }
 
-    public interface iObserver {
+    public interface iSolver {
         WfcContext.AdvanceStatus advance(WfcContext cx);
     }
 

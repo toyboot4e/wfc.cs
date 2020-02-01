@@ -1,6 +1,6 @@
 namespace Wfc {
     /// <summary>
-    /// Compatibilities of patterns for a model <c>Rule</c>
+    /// Compatibilities of patterns. Adjacency rule or overlapping rule
     /// </summary>
     public struct RuleData {
         public Grid2D<bool> cache; // continuous in direction, toPattern, then fromPattern
@@ -40,12 +40,9 @@ namespace Wfc {
             return this[from.asIndex, (int) d, to.asIndex];
         }
 
-        /// <summary>
-        /// Extracts every NxN pattern in the <c>source</c> map considering their variants (rotations and flippings)
-        /// </summary>
-        public static PatternStorage extractPatterns(ref Map source, int N) {
+        public static PatternStorage extractEveryPattern(ref Map source, int N) {
             var patterns = new PatternStorage(source, N);
-            var variations = PatternUtil.variations; // TODO: use fixed or stackalloc
+            var variations = PatternUtil.variations;
             var nVariations = variations.Length;
 
             // TODO: handling periodic input
@@ -60,5 +57,21 @@ namespace Wfc {
             return patterns;
         }
 
+        public static PatternStorage extractChunks(ref Map source, int N) {
+            var patterns = new PatternStorage(source, N);
+            var variations = PatternUtil.variations;
+            var nVariations = variations.Length;
+            var gridSize = new Vec2i(source.width, source.height) / N;
+
+            for (int y = 0; y < gridSize.y; y++) {
+                for (int x = 0; x < gridSize.x; x++) {
+                    for (int i = 0; i < nVariations; i++) {
+                        patterns.store(x, y, variations[i]);
+                    }
+                }
+            }
+
+            return patterns;
+        }
     }
 }

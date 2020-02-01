@@ -2,15 +2,15 @@ using System.Collections.Generic;
 
 namespace Wfc {
     /// <summary>Advances the state of WFC</summary>
-    public class Observer : iObserver {
+    public class Solver : iSolver {
         /// <summary>Used to pick up cell with least entropy</summary>
         CellHeap heap;
-        int nRemainingCells;
+        int nUnSolved;
         Propagator propagator;
 
-        public Observer(Vec2i gridSize, State state) {
+        public Solver(Vec2i gridSize, State state) {
             this.heap = new CellHeap(gridSize.area);
-            this.nRemainingCells = gridSize.area;
+            this.nUnSolved = gridSize.area;
             this.propagator = new Propagator();
 
             // make all the cells pickable
@@ -26,17 +26,17 @@ namespace Wfc {
         }
 
         public WfcContext.AdvanceStatus advance(WfcContext cx) {
-            if (this.nRemainingCells <= 0) return WfcContext.AdvanceStatus.Success; // every cell is decided
+            if (this.nUnSolved <= 0) return WfcContext.AdvanceStatus.Success; // every cell is decided
 
-            var(pos, isContradicted) = Observer.selectNextCellToDecide(ref this.heap, cx.state);
+            var(pos, isContradicted) = Solver.selectNextCellToDecide(ref this.heap, cx.state);
             if (isContradicted) {
                 System.Console.WriteLine("Unreachable. The heap is empty, but there are remaining cells");
                 return WfcContext.AdvanceStatus.Fail;
             }
 
-            var id = Observer.selectPatternForCell(pos.x, pos.y, cx.state, cx.model.patterns, cx.random);
-            Observer.lockinPatternForCell(pos.x, pos.y, id, cx.state, cx.model.patterns, this.propagator);
-            this.nRemainingCells -= 1;
+            var id = Solver.selectPatternForCell(pos.x, pos.y, cx.state, cx.model.patterns, cx.random);
+            Solver.solveCellWithPattern(pos.x, pos.y, id, cx.state, cx.model.patterns, this.propagator);
+            this.nUnSolved -= 1;
 
             return this.propagator.propagateAll(cx, this) ?
                 WfcContext.AdvanceStatus.Fail :
@@ -44,7 +44,7 @@ namespace Wfc {
         }
 
         /// <summary>Returns (pos, isOnContradiction)</summary>
-        /// <remark>The intent is to minimize the risk of contradiction</summary>
+        /// <remark>Uses minimum weigh heuristics to minimize the risk of contradiction</summary>
         static(Vec2i, bool) selectNextCellToDecide(ref CellHeap heap, State state) {
             while (heap.hasAnyElement()) {
                 var cell = heap.pop();
@@ -71,10 +71,8 @@ namespace Wfc {
             return new PatternId(-1);
         }
 
-        /// <summary>Lockin a cell into a <c>Pattern</c>. Collapse, observe</summary>
-        /// <remark>Every pattern is decided through this method</remark>
-        static void lockinPatternForCell(int x, int y, PatternId idToLockin, State state, PatternStorage patterns, Propagator propagator) {
-            state.onLockinPattern(x, y, patterns[idToLockin.asIndex].weight);
+        static void solveCellWithPattern(int x, int y, PatternId idToLockin, State state, PatternStorage patterns, Propagator propagator) {
+            state.solveCellWithPattern(x, y, patterns[idToLockin.asIndex].weight);
 
             // setup next propagation
             for (int i = 0; i < patterns.len; i++) {
@@ -82,12 +80,12 @@ namespace Wfc {
                 if (!state.isPossible(x, y, idToRemove) || i == idToLockin.asIndex) continue;
 
                 state.removePattern(x, y, idToRemove);
-                propagator.onLockIn(x, y, idToRemove);
+                propagator.onSolve(x, y, idToRemove);
             }
         }
     }
 
-    // TODO: cache for propagator??
+    /// <summary>Propagates constraints reducing enabler counts</summary>
     public class Propagator {
         /// <summary>LIFO</summary>
         Stack<TileRemoval> removals;
@@ -107,16 +105,16 @@ namespace Wfc {
         }
 
         /// <summary>Add a removal, which will be propagated later</summary>
-        public void onLockIn(int x, int y, PatternId id) {
+        public void onSolve(int x, int y, PatternId id) {
             this.removals.Push(new TileRemoval(x, y, id));
         }
 
         // TODO: on lockin, just remove patterns for performance and then propagate
         /// <summary>True if contradicted. Recursively propagates all the removals</summary>
-        public bool propagateAll(WfcContext cx, Observer observer) {
+        public bool propagateAll(WfcContext cx, Solver solver) {
             // propagate the effect of a removal
             while (this.removals.Count > 0) {
-                if (this.propagateRemoval(this.removals.Pop(), cx, observer)) return true;
+                if (this.propagateRemoval(this.removals.Pop(), cx, solver)) return true;
             }
             return false;
         }
@@ -132,7 +130,7 @@ namespace Wfc {
         }
 
         /// <summary>Reduces enabler counts around the cell. True if contradicted</summary>
-        bool propagateRemoval(TileRemoval removal, WfcContext cx, Observer observer) {
+        bool propagateRemoval(TileRemoval removal, WfcContext cx, Solver solver) {
             int nPatterns = cx.model.patterns.len;
             var gridSize = cx.model.gridSize;
 
@@ -156,18 +154,17 @@ namespace Wfc {
                     // decrement the enabler count for the compatible pattern
                     if (!cx.state.enablerCounts.decrement(nb.pos.x, nb.pos.y, nb.id, dirFromNeighbor)) continue;
 
-                    if (this.recPropagate(nb.pos.x, nb.pos.y, nb.id, cx, observer)) return true;
+                    if (this.removePatternUpdatingHeap(nb.pos.x, nb.pos.y, nb.id, cx, solver)) return true;
                 }
             }
 
             return false;
         }
 
-        /// <summary>Called when a next removal is found. Returns true if we're on contradiction</summary>
-        bool recPropagate(int x, int y, PatternId id, WfcContext cx, Observer observer) {
+        bool removePatternUpdatingHeap(int x, int y, PatternId id, WfcContext cx, Solver solver) {
             if (cx.state.removePatternUpdatingEntropy(x, y, id, cx.model.patterns)) return true;
 
-            observer.updateHeap(x, y, cx.state.entropies[x, y].entropyWithNoise());
+            solver.updateHeap(x, y, cx.state.entropies[x, y].entropyWithNoise());
             this.removals.Push(new TileRemoval(x, y, id));
             return false;
         }
