@@ -54,7 +54,7 @@ namespace Wfc {
             this.rule = rule;
         }
 
-        /// <summary>If the output is not periodic, filter out positions outside of the output area</summary>
+        /// <summary>If the output is not periodic, filter out positions outside of the grid</summary>
         public bool filterPos(int x, int y) {
             var size = this.gridSize;
             return x < 0 || x >= size.x || y < 0 || y >= size.y;

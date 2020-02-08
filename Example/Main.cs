@@ -5,17 +5,23 @@ using Wfc.Overlap;
 namespace Wfc.Example {
     class Program {
         static void Main(string[] args) {
-            var path = "Example/Res/rooms.txt";
-            var source = loadAsciiMap(path);
-            var outputSize = new Vec2i(36, 36);
+            // var path = "Example/Res/curve.txt";
+            // var path = "Example/Res/rooms.txt";
+            // var path = "Example/Res/Adjacency/3x3_rooms.txt";
+            // var path = "Example/Res/Adjacency/3x3_corridors.txt";
+            var path = "Example/Res/Adjacency/6x6_rooms.txt";
+            var outputSize = new Vec2i(12, 12);
+            int N = 3;
 
-            // var wfc = WfcAdjacency.create(ref source, 3, outputSize);
-            var wfc = WfcOverlap.create(ref source, 3, outputSize);
+            var source = loadAsciiMap(path);
+
+            var wfc = WfcAdjacency.create(ref source, N, outputSize);
+            // var wfc = WfcOverlap.create(ref source, 3, outputSize);
             debugPrintInput(wfc, ref source);
 
             while (!wfc.run()) {
-                // wfc = WfcAdjacency.create(ref source, 3, outputSize);
-                wfc = WfcOverlap.create(ref source, 3, outputSize);
+                wfc = WfcAdjacency.create(ref source, N, outputSize);
+                // wfc = WfcOverlap.create(ref source, N, outputSize);
             }
 
             var output = wfc.getOutput(ref source);

@@ -1,7 +1,6 @@
 namespace Wfc {
-    /// <summary>
-    /// Compatibilities of patterns. Adjacency rule or overlapping rule
-    /// </summary>
+    // TODO: use RuleDataBuilder so that fields are hidden
+    /// <summary>Compatibilities of patterns. Built elsewhere</summary>
     public struct RuleData {
         public Grid2D<bool> cache; // continuous in direction, toPattern, then fromPattern
         public int nPatterns;
@@ -40,9 +39,8 @@ namespace Wfc {
             return this[from.asIndex, (int) d, to.asIndex];
         }
 
-        public static PatternStorage extractEveryPattern(ref Map source, int N) {
+        public static PatternStorage extractEveryPattern(ref Map source, int N, PatternVariation[] variations) {
             var patterns = new PatternStorage(source, N);
-            var variations = PatternUtil.variations;
             var nVariations = variations.Length;
 
             // TODO: handling periodic input
@@ -57,16 +55,19 @@ namespace Wfc {
             return patterns;
         }
 
-        public static PatternStorage extractChunks(ref Map source, int N) {
+        public static PatternStorage extractEveryChunk(ref Map source, int N, PatternVariation[] variations) {
+            if (source.width % N != 0 || source.height % N != 0) {
+                throw new System.Exception($"source size ({source.width}, {source.height}) must be dividable with N={N}");
+            }
+
             var patterns = new PatternStorage(source, N);
-            var variations = PatternUtil.variations;
             var nVariations = variations.Length;
             var gridSize = new Vec2i(source.width, source.height) / N;
 
             for (int y = 0; y < gridSize.y; y++) {
                 for (int x = 0; x < gridSize.x; x++) {
                     for (int i = 0; i < nVariations; i++) {
-                        patterns.store(x, y, variations[i]);
+                        patterns.store(x * N, y * N, variations[i]);
                     }
                 }
             }

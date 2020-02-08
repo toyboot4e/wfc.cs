@@ -28,6 +28,10 @@ namespace Wfc {
             return true;
         }
 
+        public double distanceD() {
+            return Math.Sqrt(this.x * this.x + this.y * this.y);
+        }
+
         public int distanceInt() {
             return (int) Math.Sqrt(this.x * this.x + this.y * this.y);
         }

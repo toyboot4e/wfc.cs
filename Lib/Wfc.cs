@@ -54,7 +54,7 @@ namespace Wfc {
                 throw new System.ArgumentException($"given N = {N}; it must be bigger than one");
             }
 
-            var model = AdjacencyModel.create(ref source, 3, outputSize);
+            var model = AdjacencyModel.create(ref source, N, outputSize);
             var gridSize = outputSize / N;
             var state = new State(gridSize.x, gridSize.y, model.patterns, ref model.rule);
             return new WfcAdjacency(model, state, N);
