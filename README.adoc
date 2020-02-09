@@ -7,13 +7,14 @@ Note that it's not set up for others: not well refactored, the input file being 
 == Notes
 
 * The OverlappingModel can be used to fill a segment, like https://www.youtube.com/watch?v=fnFj3dOKcIQ[done in Caves of Qud]
-* The OverlappingModel is _really_ slow, so I'm considering using adjacency constraints, which doesn't care about local similarity.
+* The OverlappingModel is _really_ slow, so I also implemented adjacency-based constraints, which doesn't care about local similarity.
+** It doesn't reduce the order of the algorithm, but makes the input smaller.
 
 == Running an example
 
-It is hard coded to run the OverlappingModel with input `Example/Res/rooms.txt`.
+By default, an example of the OverlappingModel with input `Example/Res/rooms.txt` is hard coded.
 
-If you're using VSCode, there's `.vscode/tasks.json`, so type _Cmd+Shift+B_ or _Ctrl+Shift+B_ to run the Example project. Or run it typing some commands:
+If you're using VSCode, there's `.vscode/tasks.json`, so type _Cmd+Shift+B_ or _Ctrl+Shift+B_ to run the Example project. Or, run it with `dotnet`:
 
 [source,sh]
 ----
@@ -119,15 +120,13 @@ Good. But you'll find it's slow!
 
 == TODO
 
-=== Adjacency model
+=== Features
+
+* more generic domain (it only takes `Floor` and `Wall`, currently)
+* CLI for examples
 
 === Improvements
 
-* remove entoropy and just use `totalWeight / maxTotalWeight`
+* remove entropy and just use `totalWeight / maxTotalWeight`
 * backjumping for constant performance
 * seed-based output
-
-=== Features
-
-* add CLI
-* more generic domain (currently, it only takes `Floor` and `Wall`)

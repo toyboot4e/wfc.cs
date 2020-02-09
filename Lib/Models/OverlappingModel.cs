@@ -29,9 +29,6 @@ namespace Wfc {
         }
 
         public static Model create(ref Map source, int N, Vec2i outputSize) {
-            if (outputSize.x % N != 0 || outputSize.y % N != 0) {
-                throw new System.Exception($"output size {outputSize} is indivisible by N={N}");
-            }
             var patterns = RuleData.extractEveryPattern(ref source, N, PatternUtil.variations);
             var rule = OverlappingModel.buildRule(patterns, ref source);
             return new Model(outputSize, patterns, rule);

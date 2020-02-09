@@ -11,7 +11,7 @@ namespace Wfc {
                 throw new System.ArgumentException($"given N = {N}; it must be bigger than one");
             }
 
-            var model = OverlappingModel.create(ref source, 3, outputSize);
+            var model = OverlappingModel.create(ref source, N, outputSize);
             var state = new State(outputSize.x, outputSize.y, model.patterns, ref model.rule);
             return new WfcOverlap(model, state, N);
         }

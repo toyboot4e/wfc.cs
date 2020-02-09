@@ -6,22 +6,24 @@ namespace Wfc.Example {
     class Program {
         static void Main(string[] args) {
             // var path = "Example/Res/curve.txt";
-            // var path = "Example/Res/rooms.txt";
             // var path = "Example/Res/Adjacency/3x3_rooms.txt";
             // var path = "Example/Res/Adjacency/3x3_corridors.txt";
-            var path = "Example/Res/Adjacency/6x6_rooms.txt";
-            var outputSize = new Vec2i(12, 12);
+            // var path = "Example/Res/Adjacency/6x6_rooms.txt";
+
+            var path = "Example/Res/rooms.txt";
+            // var path = "Example/Res/Adjacency/rltk_demo_1.txt";
+            var outputSize = new Vec2i(36, 36);
             int N = 3;
 
             var source = loadAsciiMap(path);
 
-            var wfc = WfcAdjacency.create(ref source, N, outputSize);
-            // var wfc = WfcOverlap.create(ref source, 3, outputSize);
+            // var wfc = WfcAdjacency.create(ref source, N, outputSize);
+            var wfc = WfcOverlap.create(ref source, N, outputSize);
             debugPrintInput(wfc, ref source);
 
             while (!wfc.run()) {
-                wfc = WfcAdjacency.create(ref source, N, outputSize);
-                // wfc = WfcOverlap.create(ref source, N, outputSize);
+                // wfc = WfcAdjacency.create(ref source, N, outputSize);
+                wfc = WfcOverlap.create(ref source, N, outputSize);
             }
 
             var output = wfc.getOutput(ref source);
